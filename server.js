@@ -175,13 +175,36 @@ app.get('/api/datos', (req, res) => {
 });
 
 app.post('/api/datos', (req, res) => {
-  const { pacientes, turnos, obras, hc, contactos } = req.body;
+  const { pacientes, turnos, obras, hc, contactos, usuarios } = req.body;
   
   if (pacientes) db.pacientes = pacientes;
   if (turnos) db.turnos = turnos;
   if (obras) db.obras = obras;
   if (hc) db.hc = hc;
   if (contactos) db.contactos = contactos;
+  if (usuarios) {
+    // Actualizamos los usuarios asegurando que pass, password y clave queden sincronizados a la nueva contraseña
+    db.usuarios = usuarios.map(uNew => {
+      const uExistente = db.usuarios.find(u => String(u.id) === String(uNew.id) || String(u.dni) === String(uNew.dni));
+      const nuevaClave = uNew.password || uNew.pass || uNew.clave;
+      if (uExistente && nuevaClave) {
+                // 1. Primero fusionamos los datos (esto vuelve a meter tempPassword si viene del frontend)
+                const usuarioFusionado = { ...uExistente, ...uNew };
+                
+                // 2. Aseguramos la nueva contraseña oficial en todos los campos
+                usuarioFusionado.password = nuevaClave;
+                usuarioFusionado.pass = nuevaClave;
+                usuarioFusionado.clave = nuevaClave;
+                
+                // 3. Finalmente ELIMINAMOS de forma definitiva el provisorio del objeto fusionado
+                delete usuarioFusionado.tempPassword;
+                delete usuarioFusionado.tempPasswordExpires;
+                
+                return usuarioFusionado;
+              }
+      return uNew;
+    });
+  }
 
   saveDB(db);
   res.json({ success: true, message: 'Datos guardados correctamente' });
@@ -250,8 +273,14 @@ app.post('/api/pacientes/cambiar-password', (req, res) => {
     return res.status(400).json({ mensaje: 'La contraseña actual es incorrecta.' });
   }
 
+  // Actualizamos a la nueva clave en todas sus variables
   usuarioEncontrado.password = passNueva;
   usuarioEncontrado.pass = passNueva;
+  usuarioEncontrado.clave = passNueva;
+
+  // Destruimos la contraseña temporal para invalidarla automáticamente
+  delete usuarioEncontrado.tempPassword;
+  delete usuarioEncontrado.tempPasswordExpires;
 
   saveDB(db);
 
@@ -259,45 +288,51 @@ app.post('/api/pacientes/cambiar-password', (req, res) => {
   return res.status(200).json({ mensaje: 'Contraseña actualizada con éxito.' });
 });
 
-// RECUPERAR CONTRASEÑA (ENVÍO DE EMAIL PROVISORIO)
+// RECUPERAR CONTRASEÑA (ENVÍO DE EMAIL PROVISORIO CON VIGENCIA DE 3 DÍAS)
 app.post('/api/recuperar-password', async (req, res) => {
   const { dni, email } = req.body;
   
   if (!dni || !email) {
-    return res.status(400).json({ mensaje: 'DNI y Correo Electrónico son obligatorios.' });
+    return res.status(400).json({ ok: false, mensaje: 'DNI y Correo Electrónico son obligatorios.' });
   }
 
-  const dniStr = dni.toString().toLowerCase();
+  const dniStr = dni.toString().trim().toLowerCase();
+  const emailStr = email.trim().toLowerCase();
 
-  // 1. Buscar si el usuario existe
-  const usuario = db.usuarios.find(u => 
-    (u.dni && u.dni.toString().toLowerCase() === dniStr) || 
-    (u.usuario && u.usuario.toString().toLowerCase() === dniStr)
+  // 1. Buscar si el usuario existe en la base de datos
+  let usuario = db.usuarios.find(u => 
+    (u.dni && u.dni.toString().trim().toLowerCase() === dniStr) || 
+    (u.usuario && u.usuario.toString().trim().toLowerCase() === dniStr)
   );
 
   if (!usuario) {
-    return res.status(404).json({ mensaje: 'No se encontró un paciente registrado con ese DNI.' });
+    return res.status(404).json({ ok: false, mensaje: 'No se encontró un usuario registrado con ese DNI.' });
   }
 
   // 2. Verificar que el email coincida con su cuenta 
   const pacienteEncontrado = db.pacientes.find(p => p.dni && p.dni.toString() === dniStr);
-  const emailGuardado = pacienteEncontrado ? pacienteEncontrado.email : usuario.email;
+  const emailGuardado = pacienteEncontrado ? (pacienteEncontrado.email || '').trim().toLowerCase() : (usuario.email || '').trim().toLowerCase();
 
-  if (emailGuardado && emailGuardado.toLowerCase() !== email.toLowerCase()) {
-    return res.status(403).json({ mensaje: 'El correo ingresado no coincide con el registrado en tu cuenta.' });
+  if (emailGuardado && emailGuardado !== emailStr) {
+    return res.status(403).json({ ok: false, mensaje: 'El correo ingresado no coincide con el registrado en tu cuenta.' });
   }
 
-  // 3. Generar contraseña provisoria aleatoria de 6 caracteres
+  if (!usuario.email) {
+    usuario.email = emailStr;
+  }
+  if (pacienteEncontrado && !pacienteEncontrado.email) {
+    pacienteEncontrado.email = emailStr;
+  }
+
+  // 3. Generar contraseña provisoria de 6 caracteres, reemplazar la clave actual y configurar vigencia de 3 días
   const tempPass = Math.random().toString(36).slice(-6).toUpperCase();
-  
-  // Asignamos la contraseña nueva
+  const ahora = Date.now();
+  const tresDiasMs = 3 * 24 * 60 * 60 * 1000;
+
   usuario.password = tempPass;
   usuario.pass = tempPass;
-  
-  // Si no tenía email guardado previamente, se lo guardamos ahora
-  if (pacienteEncontrado && !pacienteEncontrado.email) {
-    pacienteEncontrado.email = email; 
-  }
+  usuario.tempPassword = tempPass;
+  usuario.tempPasswordExpires = ahora + tresDiasMs;
   
   saveDB(db);
 
@@ -306,28 +341,28 @@ app.post('/api/recuperar-password', async (req, res) => {
     try {
       await transporter.sendMail({
         from: `"Medi-Turnos" <${GMAIL_USER}>`,
-        to: email,
+        to: emailStr,
         subject: 'Recuperación de Contraseña - Medi-Turnos',
-        text: `Hola ${usuario.nombre}, tu contraseña provisoria es: ${tempPass}. Por seguridad, ingresá al sistema y cambiala desde "Datos Personales".`,
+        text: `Hola ${usuario.nombre || 'Usuario'}, tu contraseña provisoria es: ${tempPass}. Válida por 3 días.`,
         html: `
           <div style="font-family: sans-serif; color: #1a2e22; padding: 20px;">
-            <h2>Hola ${usuario.nombre}</h2>
+            <h2>Hola ${usuario.nombre || 'Usuario'}</h2>
             <p>Has solicitado recuperar tu acceso al portal de <strong>Medi-Turnos</strong>.</p>
             <p>Tu contraseña provisoria es:</p>
-            <h3 style="background: #e2e8f0; padding: 10px; display: inline-block; letter-spacing: 2px;">${tempPass}</h3>
-            <p>Por cuestiones de seguridad, te recomendamos iniciar sesión y cambiar esta contraseña desde la sección <b>Datos Personales</b>.</p>
+            <h3 style="background: #e2e8f0; padding: 10px 15px; display: inline-block; letter-spacing: 2px; font-family: monospace;">${tempPass}</h3>
+            <p>⚠️ <strong>IMPORTANTE:</strong> Esta contraseña provisoria tiene una validez de <strong>3 días</strong>. Por seguridad, te recomendamos iniciar sesión y cambiarla.</p>
           </div>
         `
       });
-      console.log(`✅ Contraseña provisoria enviada a ${email} para el DNI ${dni}`);
+      console.log(`✅ Contraseña provisoria enviada a ${emailStr} para el DNI ${dni}`);
       return res.status(200).json({ ok: true, mensaje: 'Clave enviada exitosamente.' });
     } catch (error) {
       console.error('❌ Error enviando email de recuperación:', error);
-      return res.status(500).json({ mensaje: 'No se pudo enviar el correo. Avisá al consultorio.' });
+      return res.status(500).json({ ok: false, mensaje: 'No se pudo enviar el correo. Avisá al consultorio.' });
     }
   } else {
     console.error('⚠️ No se puede enviar el email porque falta el GMAIL_USER en .env');
-    return res.status(500).json({ mensaje: 'El sistema de correos no está configurado.' });
+    return res.status(500).json({ ok: false, mensaje: 'El sistema de correos no está configurado.' });
   }
 });
 
@@ -434,26 +469,59 @@ app.post('/api/turnos', async (req, res) => {
   db.turnos.push(nuevoTurno);
   saveDB(db);
 
-  const textoMsg = `Hola ${paciente}, tu turno quedó confirmado para el ${fecha} a las ${hora} hs. ¡Te esperamos!`;
   let notificaciones = { email: false };
 
   // --- LÓGICA DE NOTIFICACIÓN DE EMAIL ---
-  if (!email) {
-    console.log('⚠️ ALERTA: No se envió email porque req.body.email llegó vacío o undefined desde el navegador.');
-  } else if (!GMAIL_USER || !GMAIL_APP_PASS) {
-    console.log('⚠️ ALERTA: No se envió email porque faltan configurar GMAIL_USER o GMAIL_APP_PASS en el archivo .env.');
+  if (!GMAIL_USER || !GMAIL_APP_PASS) {
+    console.log('⚠️ ALERTA: No se enviaron correos porque faltan configurar GMAIL_USER o GMAIL_APP_PASS en el archivo .env.');
   } else {
-    console.log(`📧 Intentando enviar correo mediante Nodemailer a: ${email}...`);
     try {
-      const info = await transporter.sendMail({
-        from: `"Medi-Turnos" <${GMAIL_USER}>`,
-        to: email,
-        subject: 'Confirmación de turno médico',
-        text: textoMsg,
-        html: `<p>Hola <strong>${paciente}</strong>,</p><p>Tu turno con ${nuevoTurno.profesional} quedó registrado para el <strong>${fecha}</strong> a las <strong>${hora} hs</strong>.</p><p>¡Te esperamos!</p>`
+      // 1. Enviar correo al PACIENTE informando la solicitud (con fecha y doctor)
+      if (email) {
+        console.log(`📧 Intentando enviar correo al paciente: ${email}...`);
+        await transporter.sendMail({
+          from: `"Medi-Turnos" <${GMAIL_USER}>`,
+          to: email,
+          subject: 'Solicitud de turno médico',
+          text: `Hola ${paciente}, se solicitó un turno para la fecha ${fecha} a las ${hora} hs con el doctor ${nuevoTurno.profesional}.`,
+          html: `<div style="font-family: sans-serif; padding: 20px; color: #1a2e22;">
+                   <p>Hola <strong>${paciente}</strong>,</p>
+                   <p>Te confirmamos que <strong>se solicitó un turno</strong> con éxito.</p>
+                   <ul style="background: #e8f5ee; padding: 15px; border-radius: 8px; list-style: none;">
+                     <li>🗓️ <strong>Fecha:</strong> ${fecha} a las ${hora} hs</li>
+                     <li>🩺 <strong>Doctor/a:</strong> ${nuevoTurno.profesional}</li>
+                   </ul>
+                   <p>¡Te esperamos en el consultorio!</p>
+                 </div>`
+        });
+        notificaciones.email = true;
+        console.log('✅ Correo enviado al paciente con éxito.');
+      } else {
+        console.log('⚠️ No se envió email al paciente porque no tiene correo registrado.');
+      }
+
+      // 2. Enviar correo de aviso al CONSULTORIO (Doctor/Secretaria)
+      console.log(`📧 Intentando enviar correo de aviso interno al consultorio...`);
+      await transporter.sendMail({
+        from: `"Medi-Turnos Sistema" <${GMAIL_USER}>`,
+        to: GMAIL_USER, // Envía a la misma casilla de correo configurada para recibir el aviso
+        subject: `Nuevo turno solicitado: ${paciente}`,
+        text: `El paciente ${paciente} solicitó un turno con el doctor ${nuevoTurno.profesional} para la fecha ${fecha} a las ${hora} hs.`,
+        html: `<div style="font-family: sans-serif; padding: 15px; border: 1px solid #b7d4c4; border-radius: 8px;">
+                 <h2 style="color: #1a7a4c;">Nuevo turno solicitado</h2>
+                 <p>Un paciente acaba de solicitar un turno desde la plataforma online:</p>
+                 <ul>
+                   <li><strong>Paciente:</strong> ${paciente}</li>
+                   <li><strong>Doctor/a:</strong> ${nuevoTurno.profesional}</li>
+                   <li><strong>Fecha:</strong> ${fecha}</li>
+                   <li><strong>Hora:</strong> ${hora} hs</li>
+                   <li><strong>Motivo:</strong> ${nuevoTurno.motivo}</li>
+                 </ul>
+                 <p>El turno ya figura como <strong>Pendiente</strong> en la base de datos.</p>
+               </div>`
       });
-      console.log('✅ Correo enviado con éxito. ID de mensaje:', info.messageId);
-      notificaciones.email = true;
+      console.log('✅ Correo de aviso interno enviado al consultorio con éxito.');
+
     } catch (error) {
       console.error('❌ ERROR AL ENVIAR EMAIL DESDE GMAIL:', error.message);
     }
@@ -501,7 +569,7 @@ app.get('/api/usuarios', (req, res) => {
   res.json(usuariosSinPass);
 });
 
-// CREAR USUARIO
+// CREAR USUARIO (BÁSICO)
 app.post('/api/usuarios', (req, res) => {
   const { usuario, password, rol, nombre } = req.body;
   if (!usuario || !password || !rol) {
@@ -524,6 +592,100 @@ app.post('/api/usuarios', (req, res) => {
 
   const { password: _, pass: __, ...sinPass } = nuevo;
   res.status(201).json(sinPass);
+});
+
+// CREACIÓN COMPLETA DE USUARIO DESDE CONSOLA MASTER CON ENVÍO DE CORREO AUTOMÁTICO (VIGENCIA 3 DÍAS)
+app.post('/api/usuarios/crear-completo', async (req, res) => {
+  const { usuario, user, nombre, dni, email, password, pass, role, rol, tempPassword, tempPasswordExpires, expiracion } = req.body;
+
+  const dniFinal = (dni || usuario || '').trim();
+  const nombreFinal = (user || nombre || '').trim();
+  const passFinal = (password || pass || '').trim();
+  const rolFinal = (role || rol || 'paciente').trim();
+  const emailFinal = (email || '').trim().toLowerCase();
+
+  if (!dniFinal || !nombreFinal || !passFinal || !emailFinal) {
+    return res.status(400).json({ ok: false, mensaje: 'Faltan datos obligatorios (Nombre, DNI, Email y Contraseña).' });
+  }
+
+  // Verificar si ya existe un usuario con el mismo DNI o identificador
+  const existe = db.usuarios.find(u => 
+    (u.dni && u.dni.toString().trim().toLowerCase() === dniFinal.toLowerCase()) || 
+    (u.usuario && u.usuario.toString().trim().toLowerCase() === dniFinal.toLowerCase())
+  );
+
+  if (existe) {
+    return res.status(400).json({ ok: false, mensaje: 'Ya existe un usuario registrado con ese DNI o identificador.' });
+  }
+
+  const nuevoId = db.usuarios.length ? Math.max(...db.usuarios.map(u => u.id)) + 1 : 1;
+  const expiracionMs = tempPasswordExpires || (Date.now() + (3 * 24 * 60 * 60 * 1000));
+
+  const nuevoUsuario = {
+    id: nuevoId,
+    usuario: dniFinal,
+    password: passFinal,
+    pass: passFinal,
+    rol: rolFinal,
+    nombre: nombreFinal,
+    dni: dniFinal,
+    email: emailFinal,
+    tempPassword: passFinal,
+    tempPasswordExpires: expiracionMs,
+    expiracion: expiracion || new Date(expiracionMs).toLocaleDateString('es-AR')
+  };
+
+  db.usuarios.push(nuevoUsuario);
+
+  // Si es un paciente, agregarlo también a la lista de pacientes si no se encuentra registrado
+  if (rolFinal === 'paciente') {
+    const pacienteExiste = db.pacientes.find(p => p.dni && p.dni.toString() === dniFinal.toString());
+    if (!pacienteExiste) {
+      db.pacientes.push({
+        id: db.pacientes.length ? Math.max(...db.pacientes.map(p => p.id)) + 1 : 1,
+        nombre: nombreFinal,
+        dni: dniFinal,
+        obra: 'Particular',
+        telefono: '',
+        email: emailFinal,
+        estado: 'Habilitado'
+      });
+    }
+  }
+
+  saveDB(db);
+
+  // Envío automático del correo electrónico con las credenciales y la vigencia
+  if (GMAIL_USER && GMAIL_APP_PASS) {
+    try {
+      await transporter.sendMail({
+        from: `"Medi-Turnos Master Control" <${GMAIL_USER}>`,
+        to: emailFinal,
+        subject: 'Credenciales de Acceso - Medi-Turnos',
+        text: `Hola ${nombreFinal}, tus accesos al sistema Medi-Turnos han sido generados. Tu usuario es ${dniFinal} y tu contraseña provisoria es: ${passFinal}. Válida por 3 días.`,
+        html: `
+          <div style="font-family: sans-serif; color: #1a2e22; padding: 20px; border: 1px solid #b7d4c4; border-radius: 8px;">
+            <h2 style="color: #1a7a4c;">¡Bienvenido/a a Medi-Turnos, ${nombreFinal}!</h2>
+            <p>Se ha generado tu cuenta con el rol de: <strong>${rolFinal.toUpperCase()}</strong>.</p>
+            <p>Tus credenciales de acceso son:</p>
+            <ul style="background: #f8faf9; padding: 15px; border-radius: 6px; list-style: none;">
+              <li><strong>Usuario / DNI:</strong> <span style="font-family: monospace; background: #e5ebe8; padding: 2px 6px; border-radius: 4px;">${dniFinal}</span></li>
+              <li><strong>Contraseña provisoria:</strong> <span style="font-family: monospace; background: #e5ebe8; padding: 2px 6px; border-radius: 4px;">${passFinal}</span></li>
+            </ul>
+            <p>⚠️ <strong>IMPORTANTE:</strong> Esta contraseña tiene una vigencia de <strong>3 días</strong>. Por seguridad, te recomendamos iniciar sesión y modificarla desde tu perfil.</p>
+          </div>
+        `
+      });
+      console.log(`✅ Credenciales enviadas por correo a ${emailFinal} (${dniFinal})`);
+    } catch (error) {
+      console.error('❌ Error al enviar el correo de alta de usuario:', error);
+    }
+  } else {
+    console.log('⚠️ Usuario guardado, pero no se envió el correo porque faltan las credenciales de Gmail en el archivo .env');
+  }
+
+  const { password: _, pass: __, ...usuarioSinPass } = nuevoUsuario;
+  return res.status(201).json({ ok: true, mensaje: 'Usuario creado y correo enviado con éxito', usuario: usuarioSinPass });
 });
 
 // ========== INICIALIZACIÓN DEL SERVIDOR ==========
