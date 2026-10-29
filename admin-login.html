@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Acceso Administración</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.9)),
+                url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=1920') center/cover no-repeat fixed;
+    padding: 20px;
+  }
+  .auth-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    border: 1px solid #374151;
+  }
+  .auth-header {
+    background: #111827;
+    color: #34d399;
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+  .auth-header .logo {
+    width: 56px; height: 56px;
+    background: #34d399;
+    color: #111827;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  .auth-header h1 { font-size: 22px; font-weight: 800; color: white; }
+  .auth-header p { font-size: 13px; opacity: 0.8; margin-top: 4px; color: #9ca3af; }
+  .auth-body { padding: 28px 24px; }
+  .input-group { margin-bottom: 16px; }
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    letter-spacing: 0.4px;
+  }
+  .input-wrapper { position: relative; }
+  .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: #6b7280;
+  }
+  .input-wrapper input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #f9fafb;
+    color: #111827;
+  }
+  .input-wrapper input:focus {
+    outline: none;
+    border-color: #34d399;
+    background: #fff;
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: #111827;
+    color: #34d399;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-submit:hover { background: #1f2937; }
+  .msg-box {
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 18px;
+    display: none;
+    line-height: 1.4;
+  }
+  .msg-box.error { 
+    background: #fef2f2; 
+    color: #dc2626; 
+    border: 2px solid #fca5a5; 
+    display: block !important; 
+  }
+  .msg-box.success { 
+    background: #d1fae5; 
+    color: #065f46; 
+    border: 2px solid #6ee7b7; 
+    display: block !important; 
+  }
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .back-link:hover { color: #111827; }
+  .hint {
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 14px;
+    background: #f3f4f6;
+    padding: 8px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="auth-card">
+  <div class="auth-header">
+    <div class="logo">MT</div>
+    <h1>Medi-Turnos</h1>
+    <p>Acceso Administración Master</p>
+  </div>
+  <div class="auth-body">
+    <div id="msgAlert" class="msg-box"></div>
+    <form id="formLogin">
+      <div class="input-group">
+        <label>DNI</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🛡️</span>
+          <input type="text" id="loginDni" placeholder="Ej: 30123456" required autocomplete="username">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Ingresar al Panel Master</button>
+    </form>
+    <div class="hint">Ingresá con el <b>DNI</b> y la <b>contraseña</b> que te enviaron por correo.<br>
+      (Usuario de emergencia: DNI <b>admin</b> · Clave <b>****</b>)</div>
+    <a href="index.html" class="back-link">← Volver al Menú Principal</a>
+  </div>
+</div>
+<script>
+  document.getElementById('formLogin').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const box = document.getElementById('msgAlert');
+    box.style.display = 'none';
+    box.className = 'msg-box';
+
+    const dniIngresado = document.getElementById('loginDni').value.trim();
+    const passwordIngresado = document.getElementById('loginPass').value;
+
+    // 1. Lista de usuarios creados desde permisos.html
+    const listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+
+    // Buscamos por DNI + contraseña
+    const usuarioValido = listaUsuarios.find(u => 
+      String(u.dni) === dniIngresado && 
+      u.password === passwordIngresado
+    );
+
+    if (usuarioValido) {
+      // Solo permitimos rol admin
+      const rol = (usuarioValido.rol || '').toLowerCase();
+      if (rol !== 'admin') {
+        box.innerHTML = '❌ Este usuario no tiene permisos de Administrador Master.';
+        box.className = 'msg-box error';
+        return;
+      }
+
+      // Guardamos el usuario activo
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        ...usuarioValido,
+        nombre: usuarioValido.usuario || usuarioValido.nombre,
+        rol: 'admin',
+        rolMostrar: 'Administrador Master'
+      }));
+
+      box.textContent = '¡Bienvenido! Redirigiendo...';
+      box.className = 'msg-box success';
+      setTimeout(() => window.location.href = 'permisos.html', 700);
+      return;
+    }
+
+    // 2. Usuario de emergencia
+    if (dniIngresado === 'admin' && passwordIngresado === '1234') {
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        nombre: 'Administrador Master',
+        dni: 'admin',
+        rol: 'admin',
+        rolMostrar: 'Administrador Master'
+      }));
+      box.textContent = '¡Bienvenido! (Modo Local)';
+      box.className = 'msg-box success';
+      setTimeout(() => window.location.href = 'permisos.html', 700);
+      return;
+    }
+
+    // 3. Credenciales incorrectas
+    box.innerHTML = '❌ DNI o contraseña incorrectos';
+    box.className = 'msg-box error';
+  });
+
+  document.getElementById('formLogin').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const box = document.getElementById('msgAlert');
+    box.style.display = 'none';
+    box.className = 'msg-box';
+
+    const usuario = document.getElementById('loginDni').value.trim();
+    const password = document.getElementById('loginPass').value;
+
+    try {
+      const res = await fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, password, rol: 'admin' })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('usuario_activo', JSON.stringify({
+          ...data.usuario,
+          rolMostrar: 'Administrador Master'
+        }));
+        box.textContent = '¡Bienvenido! Redirigiendo...';
+        box.className = 'msg-box success';
+        setTimeout(() => window.location.href = 'permisos.html', 700);
+      } else {
+        box.innerHTML = '❌ ' + (data.mensaje || 'DNI o contraseña incorrectos');
+        box.className = 'msg-box error';
+      }
+    } catch (err) {
+      box.innerHTML = '❌ Error de conexión con el backend.';
+      box.className = 'msg-box error';
+    }
+  });
+
+
+</script>
+</body>
+</html>

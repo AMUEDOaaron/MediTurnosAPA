@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Inicio</title>
+<link rel="icon" type="image/png" href="assets/Logo-MediTurnos.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d3b24 0%, #1a7a4c 50%, #145c3a 100%);
+    padding: 20px;
+  }
+  .container {
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+  }
+  .logo-box {
+    background: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    border-radius: 20px;
+    font-size: 36px;
+    font-weight: 800;
+    color: #1a7a4c;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  h1 {
+    color: white;
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: rgba(255,255,255,0.85);
+    font-size: 16px;
+    margin-bottom: 40px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-decoration: none;
+    color: #1a2e22;
+    transition: all 0.25s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border: 2px solid transparent;
+  }
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    border-color: #1a7a4c;
+  }
+  .card .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  .card strong {
+    display: block;
+    font-size: 16px;
+    color: #1a7a4c;
+    margin-bottom: 6px;
+  }
+  .card p {
+    font-size: 12px;
+    color: #5a6b60;
+    line-height: 1.4;
+  }
+  .creds {
+    margin-top: 40px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 18px 24px;
+    color: white;
+    font-size: 13px;
+    text-align: left;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .creds h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+  }
+  .creds code {
+    background: rgba(0,0,0,0.25);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+  }
+  .creds ul {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-box">MT</div>
+    <h1>Medi-Turnos</h1>
+    <p class="subtitle">Sistema de gestión de turnos médicos</p>
+
+    <div class="cards">
+      <a href="admin-login.html" class="card">
+        <div class="icon">🛡️</div>
+        <strong>Administración</strong>
+        <p>Panel master y permisos del sistema</p>
+      </a>
+
+      <a href="secretaria-login.html" class="card">
+        <div class="icon">📋</div>
+        <strong>Secretaría</strong>
+        <p>Área administrativa y recepción</p>
+      </a>
+
+      <a href="profesional-login.html" class="card">
+        <div class="icon">🩺</div>
+        <strong>Profesional</strong>
+        <p>Agenda y pacientes del médico</p>
+      </a>
+
+      <a href="pacientes-login.html" class="card">
+        <div class="icon">👤</div>
+        <strong>Pacientes</strong>
+        <p>Solicitar y ver turnos online</p>
+      </a>
+    </div>
+
+
+  </div>
+</body>
+</html>

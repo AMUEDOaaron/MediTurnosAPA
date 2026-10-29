@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Portal del Paciente</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(rgba(13, 59, 36, 0.75), rgba(20, 92, 58, 0.85)),
+                url('https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=1920') center/cover no-repeat fixed;
+    padding: 20px;
+  }
+
+  .auth-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    border: 1px solid #b7d4c4;
+  }
+
+  .auth-header {
+    background: #1a7a4c;
+    color: white;
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+
+  .auth-header img {
+    height: 48px;
+    background: white;
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .auth-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .auth-header p {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-top: 2px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    background: #f0faf4;
+    border-bottom: 1px solid #b7d4c4;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #5a6b60;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    color: #1a7a4c;
+    border-bottom-color: #1a7a4c;
+    background: #ffffff;
+  }
+
+  .auth-body {
+    padding: 24px;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a2e22;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    letter-spacing: 0.4px;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 16px;
+    color: #1a7a4c;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .input-wrapper input,
+  .input-wrapper select {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border: 1.5px solid #b7d4c4;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fafffe;
+    color: #1a2e22;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+
+  .input-wrapper input:focus,
+  .input-wrapper select:focus {
+    outline: none;
+    border-color: #1a7a4c;
+    background: #ffffff;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: #1a7a4c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(26, 122, 76, 0.2);
+    transition: all 0.2s;
+  }
+
+  .btn-submit:hover {
+    background: #145c3a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(26, 122, 76, 0.3);
+  }
+
+  .msg-box {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .msg-box.error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    display: block;
+  }
+
+  .msg-box.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+    display: block;
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #1a7a4c;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .back-link:hover { text-decoration: underline; }
+
+  .forgot-link {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #1a7a4c;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .forgot-link:hover { text-decoration: underline; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 10px;
+    background: #e2e8f0;
+    color: #334155;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: #cbd5e1; }
+</style>
+</head>
+<body>
+
+<div class="auth-card">
+  <div class="auth-header">
+    <img src="assets/Logo-MediTurnos.png" alt="Medi-Turnos" onerror="this.style.display='none'">
+    <h1>Medi-Turnos</h1>
+    <p>Portal de Acceso para Pacientes</p>
+  </div>
+
+  <div class="auth-tabs">
+    <button class="tab-btn active" id="btnTabLogin" onclick="switchTab('login')">Ingresar</button>
+    <button class="tab-btn" id="btnTabReg" onclick="switchTab('registro')">Crear Cuenta Paciente</button>
+  </div>
+
+  <div class="auth-body">
+    <div id="msgAlert" class="msg-box"></div>
+
+    <!-- FORMULARIO INICIAR SESIÓN -->
+    <form id="formLogin">
+      <div class="input-group">
+        <label>DNI / Documento</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🪪</span>
+          <input type="text" id="loginUsuario" placeholder="Ej: 43064423" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required autocomplete="username">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+
+      <a href="#" id="btnForgot" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      <button type="submit" class="btn-submit">Acceder al Portal</button>
+    </form>
+
+    <!-- FORMULARIO DE RECUPERACIÓN -->
+    <form id="formRecover" style="display: none;">
+      <p style="font-size: 13px; color: #4b5563; margin-bottom: 14px; text-align: center;">
+        Ingresá tu DNI y tu Correo Electrónico para enviarte una clave provisoria (válida por 3 días).
+      </p>
+      <div class="input-group">
+        <label>DNI</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🪪</span>
+          <input type="text" id="recoverDni" placeholder="Ej: 43064423" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Correo Electrónico</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉️</span>
+          <input type="email" id="recoverEmail" placeholder="correo@ejemplo.com" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Enviar Contraseña Provisoria</button>
+      <button type="button" id="btnCancelRecover" class="btn-secondary">Volver al Login</button>
+    </form>
+    
+    <!-- FORMULARIO REGISTRO NUEVO PACIENTE -->
+    <form id="formRegistro" style="display:none;">
+      <div class="input-group">
+        <label>Nombre</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input type="text" id="regNombre" placeholder="Ej: Juan" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Apellido</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input type="text" id="regApellido" placeholder="Ej: Pérez" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>DNI / Documento</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🪪</span>
+          <input type="text" id="regDni" placeholder="Ej: 43064423" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Obra Social / Cobertura</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🏥</span>
+          <select id="regObra" required>
+            <option value="Particular">Particular</option>
+            <option value="OSDE">OSDE</option>
+            <option value="Swiss Medical">Swiss Medical</option>
+            <option value="Galeno">Galeno</option>
+            <option value="Medicus">Medicus</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Teléfono de Contacto</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📞</span>
+          <input type="tel" id="regTel" placeholder="Ej: 11 5555-1234" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔑</span>
+          <input type="password" id="regPass" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">Registrarme y Pedir Turno</button>
+    </form>
+
+    <a href="index.html" class="back-link">← Volver al Menú Principal</a>
+  </div>
+</div>
+
+<script>
+  const formLogin = document.getElementById('formLogin');
+  const formReg = document.getElementById('formRegistro');
+  const formRecover = document.getElementById('formRecover');
+  const btnForgot = document.getElementById('btnForgot');
+  const btnCancelRecover = document.getElementById('btnCancelRecover');
+  const tLogin = document.getElementById('btnTabLogin');
+  const tReg = document.getElementById('btnTabReg');
+
+  function switchTab(type) {
+    ocultarMensaje();
+    formRecover.style.display = 'none';
+
+    if (type === 'login') {
+      formLogin.style.display = 'block';
+      formReg.style.display = 'none';
+      tLogin.classList.add('active');
+      tReg.classList.remove('active');
+    } else {
+      formLogin.style.display = 'none';
+      formReg.style.display = 'block';
+      tReg.classList.add('active');
+      tLogin.classList.remove('active');
+    }
+  }
+
+  function mostrarMensaje(text, type) {
+    const box = document.getElementById('msgAlert');
+    box.textContent = text;
+    box.className = 'msg-box ' + type;
+    box.style.display = 'block';
+  }
+
+  function ocultarMensaje() {
+    const box = document.getElementById('msgAlert');
+    box.className = 'msg-box';
+    box.style.display = 'none';
+  }
+
+  // Alternar a formulario de recuperación
+  btnForgot.addEventListener('click', function(e) {
+    e.preventDefault();
+    ocultarMensaje();
+    formLogin.style.display = 'none';
+    formReg.style.display = 'none';
+    tLogin.classList.remove('active');
+    tReg.classList.remove('active');
+    formRecover.style.display = 'block';
+  });
+
+  btnCancelRecover.addEventListener('click', function() {
+    ocultarMensaje();
+    formRecover.style.display = 'none';
+    formLogin.style.display = 'block';
+    tLogin.classList.add('active');
+  });
+
+  // EVENTO: INICIAR SESIÓN (Soporta localStorage local con validación de clave de 3 días + Backend)
+  formLogin.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    ocultarMensaje();
+
+    const dniIngresado = document.getElementById('loginUsuario').value.trim();
+    const passwordIngresado = document.getElementById('loginPass').value;
+
+    const listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+    const ahora = Date.now();
+
+    const idxUsuario = listaUsuarios.findIndex(u => String(u.dni) === dniIngresado);
+    let usuarioValido = null;
+    let esPasswordProvisorio = false;
+
+    if (idxUsuario !== -1) {
+      const u = listaUsuarios[idxUsuario];
+      if (u.password === passwordIngresado) {
+        usuarioValido = u;
+      } else if (u.tempPassword && u.tempPassword === passwordIngresado) {
+        if (u.tempPasswordExpires && ahora <= u.tempPasswordExpires) {
+          usuarioValido = u;
+          esPasswordProvisorio = true;
+        } else {
+          mostrarMensaje('❌ La contraseña provisoria ha expirado (duración: 3 días). Solicita una nueva.', 'error');
+          return;
+        }
+      }
+    }
+
+    if (usuarioValido) {
+      const rol = (usuarioValido.rol || 'paciente').toLowerCase();
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        ...usuarioValido,
+        rol: rol,
+        debeCambiarPassword: esPasswordProvisorio
+      }));
+
+      mostrarMensaje(esPasswordProvisorio ? '¡Ingreso correcto con clave provisoria! Redirigiendo...' : '¡Bienvenida/o! Redirigiendo...', 'success');
+      setTimeout(() => window.location.href = 'pacientes.html', 700);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: dniIngresado, password: passwordIngresado, rol: 'paciente' })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.usuario) {
+        localStorage.setItem('usuario_activo', JSON.stringify({
+          nombre: data.usuario.nombre || data.usuario.usuario,
+          dni: data.usuario.dni || data.usuario.usuario,
+          rol: 'paciente'
+        }));
+
+        mostrarMensaje('¡Bienvenido/a! Redirigiendo...', 'success');
+        setTimeout(() => window.location.href = 'pacientes.html', 800);
+      } else {
+        mostrarMensaje('❌ ' + (data.mensaje || 'Credenciales incorrectas'), 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      mostrarMensaje('❌ DNI o contraseña incorrectos', 'error');
+    }
+  });
+
+  // EVENTO: RECUPERACIÓN DE CONTRASEÑA (SOLO POR EMAIL)
+  formRecover.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    ocultarMensaje();
+
+    const dni = document.getElementById('recoverDni').value.trim();
+    const email = document.getElementById('recoverEmail').value.trim();
+
+    // Mostramos estado de carga
+    const btnSubmit = formRecover.querySelector('.btn-submit');
+    const textoOriginal = btnSubmit.textContent;
+    btnSubmit.textContent = 'Enviando...';
+    btnSubmit.disabled = true;
+
+    try {
+      const response = await fetch('/api/recuperar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dni, email })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        mostrarMensaje(`📧 ¡Listo! Se envió una clave provisoria a tu correo. Revisá tu bandeja de entrada o spam.`, 'success');
+        document.getElementById('recoverDni').value = '';
+        document.getElementById('recoverEmail').value = '';
+      } else {
+        mostrarMensaje('❌ ' + (data.mensaje || 'Error al intentar recuperar la cuenta.'), 'error');
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      mostrarMensaje('❌ Ocurrió un error al contactar al servidor. Reintentá más tarde.', 'error');
+    } finally {
+      btnSubmit.textContent = textoOriginal;
+      btnSubmit.disabled = false;
+    }
+  });
+
+  // EVENTO: REGISTRO DE PACIENTE NUEVO
+  document.getElementById('formRegistro').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    ocultarMensaje();
+
+    const nombre = document.getElementById('regNombre').value.trim();
+    const apellido = document.getElementById('regApellido').value.trim();
+    const nombreCompleto = `${nombre} ${apellido}`.trim();
+    const dni = document.getElementById('regDni').value.trim();
+    const obra = document.getElementById('regObra').value;
+    const telefono = document.getElementById('regTel').value.trim();
+    const password = document.getElementById('regPass').value;
+
+    // Guardar también localmente para que la recuperación funcione offline si usa localStorage
+    const listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+    if (!listaUsuarios.some(u => String(u.dni) === dni)) {
+      listaUsuarios.push({ dni, password, nombre: nombreCompleto, obra, telefono, rol: 'paciente' });
+      localStorage.setItem('medi_usuarios', JSON.stringify(listaUsuarios));
+    }
+
+    try {
+      const res = await fetch('/api/pacientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombreCompleto, dni, obra, telefono, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('usuario_activo', JSON.stringify({
+          nombre: nombreCompleto,
+          dni: dni,
+          obra: obra,
+          telefono: telefono,
+          rol: 'paciente'
+        }));
+
+        mostrarMensaje('¡Cuenta creada con éxito! Redirigiendo...', 'success');
+        setTimeout(() => {
+          window.location.href = 'pacientes.html';
+        }, 1000);
+      } else {
+        mostrarMensaje('❌ ' + (data.mensaje || 'No se pudieron guardar los datos.'), 'error');
+      }
+    } catch (err) {
+      // Si falla la red pero se registró en localStorage
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        nombre: nombreCompleto, dni, obra, telefono, rol: 'paciente'
+      }));
+      mostrarMensaje('¡Cuenta creada localmente! Redirigiendo...', 'success');
+      setTimeout(() => window.location.href = 'pacientes.html', 1000);
+    }
+  });
+</script>
+</body>
+</html>

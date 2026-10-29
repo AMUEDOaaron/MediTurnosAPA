@@ -1,0 +1,2449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Turnos Online</title>
+
+<!-- Librería para generación de PDF en el navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root {
+    --green: #1a7a4c;
+    --green-dark: #145c3a;
+    --green-light: #e8f5ee;
+    --green-mid: #d1e7dd;
+    --green-soft: #f0faf4;
+    --text: #1a2e22;
+    --text-soft: #5a6b60;
+    --border: #b7d4c4;
+    --white: #ffffff;
+    --danger: #dc2626;
+    --radius: 14px;
+    --shadow: 0 4px 16px rgba(26, 122, 76, 0.08);
+    --input-bg: #fafffe;
+    --card-bg: #ffffff;
+  }
+
+  /* ===== MODO OSCURO ===== */
+  body.dark-mode {
+    --green: #22c55e;
+    --green-dark: #16a34a;
+    --green-light: #14532d;
+    --green-mid: #166534;
+    --green-soft: #0f172a;
+    --text: #f8fafc;
+    --text-soft: #94a3b8;
+    --border: #334155;
+    --white: #1e293b;
+    --danger: #ef4444;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --input-bg: #0f172a;
+    --card-bg: #1e293b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--green-soft);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  /* Botones de la barra superior */
+  .btn-theme-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a7a4c 0%, #145c3a 100%);
+    color: white;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(26, 122, 76, 0.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-left img {
+    height: 42px; background: white; border-radius: 10px; padding: 4px 8px;
+  }
+  .header-left .fallback-logo {
+    height: 42px; width: 42px; background: white; color: #1a7a4c;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px;
+  }
+  .header-title { font-size: 15px; font-weight: 600; }
+  .header-title small { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; }
+  .patient-chip {
+    background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .patient-chip span {
+    width: 28px; height: 28px; background: white; color: #1a7a4c;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .patient-chip #chipNombre { width: auto; height: auto; background: transparent; color: inherit; border-radius: 0; }
+
+  .app { display: flex; min-height: calc(100vh - 66px); }
+
+  .sidebar {
+    width: 230px;
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 66px;
+    height: calc(100vh - 66px);
+    overflow-y: auto;
+  }
+  .sidebar .menu-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-soft); padding: 0 20px 10px;
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none;
+    border-left: 3px solid transparent; transition: all 0.15s; cursor: pointer;
+  }
+  .side-item:hover { background: var(--green-light); color: var(--green); }
+  .side-item.active {
+    background: var(--green-light); color: var(--green);
+    border-left-color: var(--green); font-weight: 600;
+  }
+  .side-item .icon { font-size: 18px; width: 24px; text-align: center; }
+  .logout-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    font-size: 14px; font-weight: 600; color: var(--danger); text-decoration: none;
+    border-left: 3px solid transparent; margin-top: auto; cursor: pointer; transition: all 0.15s;
+  }
+  .logout-item:hover { background: #fef2f2; border-left-color: var(--danger); }
+  .logout-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .main { flex: 1; padding: 24px 28px 40px; max-width: 960px; }
+
+  .breadcrumb { font-size: 14px; color: var(--text-soft); margin-bottom: 18px; }
+  .breadcrumb strong { color: var(--green); }
+
+  /* ===== BOTONES GRANDES ===== */
+  .action-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px;
+  }
+  .action-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    color: inherit;
+  }
+  .action-card:hover {
+    border-color: var(--green);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(26, 122, 76, 0.15);
+  }
+  .action-card .icon { font-size: 26px; margin-bottom: 8px; }
+  .action-card strong { display: block; font-size: 15px; color: var(--green); margin-bottom: 4px; }
+  .action-card p { font-size: 12px; color: var(--text-soft); line-height: 1.4; }
+
+  /* ===== SECCIONES ===== */
+  .seccion {
+    display: none;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .seccion.activa {
+    display: block;
+  }
+
+  .seccion-header { margin-bottom: 14px; }
+  .seccion-header h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .seccion-header p { font-size: 14px; color: var(--text-soft); }
+
+  /* ===== CARD GENERAL ===== */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card-header { margin-bottom: 14px; }
+  .card-header h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .card-header p { font-size: 14px; color: var(--text-soft); }
+
+  .contact-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
+  }
+  .contact-card {
+    background: var(--green-light); border-radius: 12px; padding: 14px; text-align: center;
+  }
+  .contact-card .icon { font-size: 22px; margin-bottom: 4px; }
+  .contact-card strong { display: block; font-size: 13px; margin-bottom: 2px; }
+  .contact-card a { color: var(--text); font-size: 12px; text-decoration: none; font-weight: 600; }
+  .contact-card a:hover { text-decoration: underline; }
+
+  .info-box {
+    background: var(--green-light); border-left: 4px solid var(--green);
+    border-radius: 0 10px 10px 0; padding: 11px 14px; font-size: 13px;
+    color: var(--text); margin-top: 14px;
+  }
+  .info-box.warning {
+    background: #fffbeb;
+    border-left-color: #d97706;
+    color: #1a2e22;
+  }
+  body.dark-mode .info-box.warning {
+    background: #451a03;
+    color: #fde68a;
+  }
+
+  /* ===== ESTILOS PARA TURNOS ===== */
+  .section-label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--green); margin: 16px 0 8px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  .appt-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .appt-item:last-child { border-bottom: none; }
+  .appt-time {
+    background: var(--green-light); color: var(--text); font-weight: 700;
+    font-size: 13px; padding: 8px 11px; border-radius: 10px; min-width: 58px; text-align: center;
+  }
+  .appt-info { flex: 1; }
+  .appt-info strong { display: block; font-size: 14px; }
+  .appt-info small { color: var(--text-soft); font-size: 12px; }
+
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+  }
+  .badge.confirmed { background: #d1fae5; color: #065f46; }
+  .badge.pending { background: #fef3c7; color: #92400e; }
+  .badge.attended { background: #e0f2fe; color: #0369a1; }
+  .badge.cancelled { background: #fee2e2; color: #991b1b; }
+
+  .btn-por-confirmar {
+    font-size: 11px; font-weight: 700;
+    padding: 5px 12px; border-radius: 20px;
+    background: #fef3c7; color: #92400e;
+    border: 1.5px solid #fbbf24;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-por-confirmar:hover { background: #fde68a; border-color: #f59e0b; }
+
+  .empty-msg { color: var(--text-soft); font-size: 14px; padding: 10px 0; }
+
+  /* ===== ESTILOS PARA FORMULARIOS ===== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 4px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .form-group label .req { color: var(--danger); }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; background: var(--input-bg); color: var(--text);
+    transition: all 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--green); background: var(--white);
+  }
+  .form-group input[readonly] { opacity: 0.7; cursor: not-allowed; }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+
+  .btn-copiar-telefono {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--green-light);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-outline { background: var(--white); border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+  .btn-danger { background: var(--white); border: 1.5px solid var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: #fef2f2; }
+
+  /* ===== CALENDARIO ===== */
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;
+  }
+  .cal-grid .wd {
+    font-size: 11px; font-weight: 700; color: var(--text-soft); padding: 4px 0; text-transform: uppercase;
+  }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid transparent;
+    background: var(--green-soft); color: var(--text-soft);
+  }
+  .cal-day.empty { background: transparent; border: none; }
+  .cal-day.available { background: var(--green-light); color: var(--text); border-color: var(--green); cursor: pointer; }
+  .cal-day.selected { background: var(--green); color: white; border-color: var(--green); }
+
+  .slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot-btn {
+    padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--white); font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer;
+  }
+  .slot-btn:hover:not(:disabled) { border-color: var(--green); background: var(--green-light); }
+  .slot-btn.selected { background: var(--green); border-color: var(--green); color: white; }
+ /* Estilo por defecto para deshabilitado (Modo Claro) */
+  .slot-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    text-decoration-color: var(--danger);
+    text-decoration-thickness: 2px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    border-color: #cbd5e1;
+  }
+
+  /* Estilo específico para deshabilitado en Modo Oscuro */
+  body.dark-mode .slot-btn:disabled {
+    opacity: 0.85;
+    background: #331c24; /* Fondo rojizo suave oscuro */
+    color: #f87171;     /* Texto rojo claro legible */
+    border-color: #7f1d1d;
+    text-decoration: line-through;
+    text-decoration-color: #ef4444; /* Línea de tachado roja visible */
+    text-decoration-thickness: 2px;
+  }
+
+  .selected-summary {
+    margin-top: 12px; padding: 10px 14px; background: var(--green-light);
+    border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text); display: none;
+  }
+  .selected-summary.show { display: block; }
+
+  .status-ok {
+    background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 12px;
+    padding: 16px; text-align: center; color: #065f46; font-weight: 600; display: none;
+  }
+  .status-ok.show { display: block; }
+
+  .datos-turno-box {
+    background: var(--green-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .datos-turno-box .datos-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    margin-bottom: 14px;
+  }
+  .datos-turno-box .dato-item { font-size: 13px; }
+  .datos-turno-box .dato-item span {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px;
+  }
+  .datos-turno-box .dato-item strong { font-size: 14px; color: var(--text); }
+  .datos-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .datos-ok-badge {
+    display: none; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: #065f46;
+    background: #d1fae5; padding: 6px 12px; border-radius: 8px;
+  }
+  .datos-ok-badge.show { display: inline-flex; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green); color: white; padding: 12px 22px;
+    border-radius: 12px; font-size: 14px; font-weight: 600; opacity: 0;
+    transition: all 0.3s; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== TURNO DESTACADO ===== */
+  .turno-destacado {
+    background: var(--green-light);
+    border: 2px solid var(--green);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .turno-destacado-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+  }
+  .turno-destacado .appt-time {
+    background: var(--green);
+    color: white;
+    font-size: 16px;
+    padding: 12px 16px;
+    min-width: 75px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .turno-destacado .appt-info strong {
+    font-size: 17px;
+    color: var(--text);
+  }
+  .turno-destacado .appt-info small {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .badge-destacado {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--green);
+    color: white;
+  }
+
+  .turno-actions-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ===== ESTILOS PARA MODALES ===== */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-card {
+    background: var(--white);
+    color: var(--text);
+    border-radius: 16px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--green);
+  }
+  .modal-password-card {
+    background: var(--white);
+    color: var(--text);
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--green);
+  }
+  .modal-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+  .modal-header h2 {
+    color: var(--green);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .modal-header p {
+    color: var(--text-soft);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .modal-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-group.full {
+    grid-column: 1 / -1;
+  }
+  .modal-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .modal-group label .req {
+    color: var(--danger);
+  }
+  .modal-group input, 
+  .modal-group select {
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .modal-group input:focus, 
+  .modal-group select:focus {
+    border-color: var(--green);
+    background: var(--white);
+  }
+  .modal-actions {
+    margin-top: 24px;
+  }
+  .btn-guardar-modal {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+  .btn-guardar-modal:hover {
+    opacity: 0.9;
+  }
+
+  /* ===== ESTILOS PARA IMPRESIÓN ===== */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #comprobanteTurnoArea, #comprobanteTurnoArea * {
+      visibility: visible;
+    }
+    #comprobanteTurnoArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 30px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #000;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .app { flex-direction: column; }
+    .sidebar {
+      position: relative; top: 0; height: auto; width: 100%;
+      border-right: none; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; padding: 10px; gap: 4px;
+    }
+    .sidebar .menu-label { width: 100%; padding: 4px 10px; }
+    .side-item, .logout-item { border-left: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 0; }
+    .action-cards { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .modal-grid { grid-template-columns: 1fr; }
+    .datos-turno-box .datos-row { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    .turno-destacado-top { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MODAL OBLIGATORIO PARA NUEVO PACIENTE -->
+<div id="modalRegistroObligatorio" class="modal-overlay">
+<div class="modal-card">
+    <div class="modal-header">
+      <h2>📋 Completa tus datos personales</h2>
+      <p>Es obligatorio completar esta información por única vez para poder navegar y solicitar turnos.</p>
+    </div>
+
+    <form id="formRegistroObligatorio" onsubmit="guardarDatosNuevos(event)">
+      <div class="modal-grid">
+        <div class="modal-group">
+          <label>Nombre <span class="req">*</span></label>
+          <input type="text" id="regNombre" readonly style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+        </div>
+
+        <div class="modal-group">
+          <label>Apellido <span class="req">*</span></label>
+          <input type="text" id="regApellido" readonly style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+        </div>
+
+        <div class="modal-group">
+          <label>Tipo de Documento <span class="req">*</span></label>
+          <select id="regTipoDoc" required>
+            <option value="">Seleccionar...</option>
+            <option value="DNI" selected>DNI</option>
+            <option value="LC">LC</option>
+            <option value="LE">LE</option>
+            <option value="Pasaporte">Pasaporte</option>
+          </select>
+        </div>
+
+        <div class="modal-group">
+          <label>Número de Documento (8 dígitos) <span class="req">*</span></label>
+          <input type="text" id="regNumDoc" readonly style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+        </div>
+
+        <div class="modal-group">
+          <label>CUIL (11 dígitos sin guiones) <span class="req">*</span></label>
+          <input type="text" id="regCuil" required placeholder="Ej: 20324567898" maxlength="11" pattern="[0-9]{11}" title="Debe contener exactamente 11 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        </div>
+
+        <div class="modal-group">
+          <label>Sexo <span class="req">*</span></label>
+          <select id="regSexo" required>
+            <option value="">Seleccionar...</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Masculino">Masculino</option>
+            <option value="X">X / No binario</option>
+          </select>
+        </div>
+
+        <div class="modal-group">
+          <label>Fecha de Nacimiento <span class="req">*</span></label>
+          <input type="date" id="regFechaNac" required>
+        </div>
+
+        <div class="modal-group">
+          <label>Correo Electrónico (Debe incluir @ y .com) <span class="req">*</span></label>
+          <input type="email" id="regEmail" required placeholder="ejemplo@correo.com">
+        </div>
+
+        <div class="modal-group">
+          <label>Obra Social / Prepaga <span class="req">*</span></label>
+          <select id="regObraSocial" disabled style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+            <option value="Particular">Particular</option>
+            <option value="OSDE">OSDE</option>
+            <option value="Swiss Medical">Swiss Medical</option>
+            <option value="Galeno">Galeno</option>
+            <option value="Medicus">Medicus</option>
+            <option value="PAMI">PAMI</option>
+            <option value="IOMA">IOMA</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+
+        <div class="modal-group">
+          <label>Plan / S <span class="req" id="reqPlan">*</span></label>
+          <input type="text" id="regPlan" required placeholder="Ej: 210 / Clásico">
+        </div>
+
+        <div class="modal-group">
+          <label>Número de Afiliado <span class="req" id="reqAfiliado">*</span></label>
+          <input type="text" id="regNumAfiliado" required placeholder="Nº de carnet">
+        </div>
+
+        <div class="modal-group">
+          <label>Teléfono <span class="req">*</span></label>
+          <input type="tel" id="regTelefono" readonly style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+        </div>
+
+        <div class="modal-group">
+          <label>WhatsApp <span class="req">*</span></label>
+          <input type="tel" id="regWhatsapp" required placeholder="Ej: 11 5555-1234">
+          <button type="button" class="btn-copiar-telefono" onclick="copiarTelefonoAWhatsappModal()">
+            <input type="checkbox" id="checkMismoTelModal" style="width: auto; margin:0;" onchange="copiarTelefonoAWhatsappModal()"> Usar mi número de teléfono
+          </button>
+        </div>
+
+        <div class="modal-group full">
+          <label>Dirección (Calle y Número) <span class="req">*</span></label>
+          <input type="text" id="regDireccion" required placeholder="Ej: Av. Santa Fe 1234, Piso 2 A">
+        </div>
+
+        <div class="modal-group">
+          <label>Código Postal (CP) <span class="req">*</span></label>
+          <input type="text" id="regCp" required placeholder="Ej: C1059">
+        </div>
+
+        <div class="modal-group">
+          <label>País <span class="req">*</span></label>
+          <select id="regPais" required>
+            <option value="Argentina" selected>Argentina</option>
+          </select>
+        </div>
+
+        <div class="modal-group">
+          <label>Provincia <span class="req">*</span></label>
+          <select id="regProvincia" required onchange="cargarLocalidadesModal(this.value)">
+            <option value="">Seleccionar Provincia...</option>
+          </select>
+        </div>
+
+        <div class="modal-group">
+          <label>Ciudad / Localidad / Pueblo <span class="req">*</span></label>
+          <select id="regCiudad" required>
+            <option value="">Seleccionar Provincia primero...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-guardar-modal">Guardar y Continuar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL DE CAMBIO DE CONTRASEÑA -->
+<div id="modalCambiarPassword" class="modal-overlay">
+  <div class="modal-password-card">
+    <div class="modal-header">
+      <h2>🔒 Cambiar Contraseña</h2>
+      <p>Ingresá tu contraseña actual y la nueva contraseña.</p>
+    </div>
+
+    <form id="formCambiarPassword" onsubmit="guardarNuevaPassword(event)">
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+        
+        <div class="form-group">
+          <label>Contraseña Actual <span class="req">*</span></label>
+          <input type="password" id="passActual" required placeholder="••••••••">
+        </div>
+
+        <div class="form-group">
+          <label>Nueva Contraseña <span class="req">*</span></label>
+          <input type="password" id="passNueva" required minlength="6" placeholder="Mínimo 6 caracteres">
+        </div>
+
+        <div class="form-group">
+          <label>Confirmar Nueva Contraseña <span class="req">*</span></label>
+          <input type="password" id="passConfirmar" required minlength="6" placeholder="Repetir nueva contraseña">
+        </div>
+
+      </div>
+
+      <div class="form-actions" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+        <button type="button" class="btn btn-outline" onclick="cerrarModalPassword()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header-left">
+    <img src="assets/Logo-MediTurnos.png" alt="Medi-Turnos"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+    <div class="fallback-logo" style="display:none">MT</div>
+    <div class="header-title">
+      Medi-Turnos
+      <small>Turnos Online · Área Paciente</small>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <!-- BOTÓN CAMBIAR CONTRASEÑA -->
+    <button class="btn-theme-toggle" onclick="abrirModalPassword()">
+      🔒 Cambiar Contraseña
+    </button>
+
+    <!-- BOTÓN MODO OSCURO -->
+    <button class="btn-theme-toggle" id="btnThemeToggle" onclick="toggleDarkMode()">
+      <span id="themeIcon">🌙</span> <span id="themeText">Modo Oscuro</span>
+    </button>
+
+    <div class="patient-chip">
+      <span id="chipIniciales">--</span>
+      <span id="chipNombre">Cargando...</span>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="menu-label">Menú</div>
+    <a class="side-item active" href="#" onclick="mostrarSeccion('inicio'); return false;">
+      <span class="icon">🏠</span> Inicio
+    </a>
+    <a class="side-item" href="#" onclick="mostrarSeccion('mis-turnos'); return false;">
+      <span class="icon">📅</span> Turnos
+    </a>
+    <a class="side-item" href="#" onclick="mostrarSeccion('datos'); return false;">
+      <span class="icon">👤</span> Datos personales
+    </a>
+    <a class="logout-item" href="pacientes-login.html" onclick="localStorage.removeItem('usuario_activo'); return confirm('¿Querés cerrar la sesión?');">
+      <span class="icon">↪</span> Cerrar sesión
+    </a>
+  </aside>
+
+  <main class="main">
+    <div class="breadcrumb">Inicio &gt; <strong id="tituloSeccion">Turnos Online</strong></div>
+
+    <!-- ===== BOTONES GRANDES ===== -->
+    <div class="action-cards">
+      <div class="action-card" onclick="mostrarSeccion('nuevo-turno')">
+        <div class="icon">➕</div>
+        <strong>Solicitar turno</strong>
+        <p>Elegí fecha y horario disponible en el calendario.</p>
+      </div>
+
+      <div class="action-card" onclick="mostrarSeccion('mis-turnos')">
+        <div class="icon">📋</div>
+        <strong>Mis turnos</strong>
+        <p>Consultá tus turnos próximos y el historial.</p>
+      </div>
+
+      <div class="action-card" onclick="mostrarSeccion('confirmar-turno')">
+        <div class="icon">✅</div>
+        <strong>Confirmar asistencia</strong>
+        <p>Confirmá tu presencia al próximo turno.</p>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: INICIO ===== -->
+    <div id="seccion-inicio" class="seccion activa">
+      <div class="seccion-header">
+        <h3>📅 Sistema de Turnos Online</h3>
+        <p>Reservá, consultá y confirmá tus turnos de forma profesional y sencilla.</p>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: MIS TURNOS ===== -->
+    <div id="seccion-mis-turnos" class="seccion">
+      <div class="seccion-header">
+        <h3>Mis turnos</h3>
+      </div>
+
+      <div class="section-label">📅 Próximos turnos</div>
+      <div id="turnosContainer">
+        <p class="empty-msg">Cargando turnos...</p>
+      </div>
+
+      <div class="section-label">📜 Historial de turnos</div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; padding:12px 14px; background:var(--green-soft); border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:13px; color:var(--text-soft);">
+          Mostrando los turnos anteriores más recientes
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="historialPageSize" style="font-size:13px; font-weight:600;">Mostrar:</label>
+          <select id="historialPageSize" onchange="cambiarPageSizeHistorial()" style="padding:7px 10px; border:1.5px solid var(--border); border-radius:8px; background:var(--white); color:var(--text); font-size:13px; font-weight:600; cursor:pointer;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="anterioresTurnosBox"><p class="empty-msg">No hay turnos anteriores.</p></div>
+
+      <div id="historialPaginacion" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <span id="historialInfoPaginacion" style="font-size:12px; color:var(--text-soft);"></span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn btn-outline" id="btnHistorialPrev" onclick="cambiarPaginaHistorial(-1)" style="padding:7px 12px; font-size:12px;">← Anterior</button>
+          <span id="historialNumPagina" style="font-size:12px; font-weight:600; color:var(--text-soft); min-width:100px; text-align:center;"></span>
+          <button type="button" class="btn btn-outline" id="btnHistorialNext" onclick="cambiarPaginaHistorial(1)" style="padding:7px 12px; font-size:12px;">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: CONFIRMAR TURNO ===== -->
+    <div id="seccion-confirmar-turno" class="seccion">
+      <div class="seccion-header">
+        <h3>Confirmar turno</h3>
+        <p>Indicá si vas a asistir a tu próximo turno</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:12px;">
+        Confirmá tu asistencia con anticipación. Así el consultorio organiza mejor la agenda 
+        y se evita que el turno quede libre sin avisar.
+      </div>
+
+      <div class="info-box warning" style="margin-top:0; margin-bottom:18px;">
+        <strong>Importante:</strong> Solo podés confirmar tu asistencia a partir de las 
+        <strong>48 horas previas</strong> al turno.
+      </div>
+
+      <div class="status-ok" id="statusOk">✓ Asistencia confirmada. ¡Te esperamos!</div>
+
+      <div id="confirmTurnoBox"><p class="empty-msg">Cargando turnos...</p></div>
+    </div>
+
+    <!-- ===== SECCIÓN: NUEVO TURNO ===== -->
+    <div id="seccion-nuevo-turno" class="seccion">
+      <div class="seccion-header">
+        <h3>Solicitar nuevo turno</h3>
+        <p>Elegí un día y horario disponible en la agenda de la profesional</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:18px;">
+        Solo se muestran los días en los que la Dra. González tiene turnos libres (martes y jueves).
+      </div>
+
+      <form id="formNuevoTurno" onsubmit="enviarSolicitud(event)">
+        <div class="section-label">Tus datos para este turno</div>
+        <div class="datos-turno-box">
+          <div class="datos-row" id="datosTurnoVista">
+            <div class="dato-item"><span>Nombre</span><strong id="vistaNombre">—</strong></div>
+            <div class="dato-item"><span>DNI</span><strong id="vistaDni">—</strong></div>
+            <div class="dato-item"><span>Teléfono</span><strong id="vistaTelefono">—</strong></div>
+            <div class="dato-item"><span>Obra social</span><strong id="vistaObra">—</strong></div>
+          </div>
+          <div class="datos-actions">
+            <button type="button" class="btn btn-primary" onclick="confirmarDatosOk()">Confirmar</button>
+            <button type="button" class="btn btn-outline" onclick="mostrarSeccion('datos')">Ver datos completos</button>
+            <span class="datos-ok-badge" id="datosOkBadge">✓ Datos confirmados</span>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tipo de consulta <span class="req">*</span></label>
+            <select id="tipoConsulta" required>
+              <option value="">Seleccioná...</option>
+              <option>Control</option>
+              <option>Primera consulta</option>
+              <option>Seguimiento</option>
+              <option>Urgencia / Prioritario</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Motivo de la consulta <span class="req">*</span></label>
+            <input type="text" id="motivo" required placeholder="Ej: control de lunar...">
+          </div>
+        </div>
+
+        <div style="margin-top:14px; border:1px solid var(--border); border-radius:12px; padding:16px; background:var(--input-bg);">
+          <label style="font-weight:600; font-size:13px;">Elegí día y horario disponible <span style="color:var(--danger);">*</span></label>
+          <div style="margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-weight:700; font-size:15px;">
+              <button type="button" onclick="changeMonth(-1)" style="background:var(--green-light); border:1px solid var(--border); width:32px; height:32px; border-radius:8px; cursor:pointer; color:var(--text); font-size:16px;">‹</button>
+              <span id="calTitle">Mes Año</span>
+              <button type="button" onclick="changeMonth(1)" style="background:var(--green-light); border:1px solid var(--border); width:32px; height:32px; border-radius:8px; cursor:pointer; color:var(--text); font-size:16px;">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div style="display:flex; gap:14px; margin-top:12px; font-size:12px; color:var(--text-soft); flex-wrap:wrap;">
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--green-light); border:1px solid var(--border);"></i> Con turnos libres</span>
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--green-soft);"></i> Sin disponibilidad</span>
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--green);"></i> Seleccionado</span>
+            </div>
+            <div id="slotsBox" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+              <h4 id="slotsTitle" style="font-size:13px; font-weight:700; margin-bottom:10px;">Horarios disponibles</h4>
+              <div class="slots-grid" id="slotsGrid"></div>
+            </div>
+            <div class="selected-summary" id="selectedSummary"></div>
+          </div>
+          <input type="hidden" id="fechaElegida">
+          <input type="hidden" id="horaElegida">
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>Observaciones (opcional)</label>
+          <textarea id="observaciones" placeholder="Ej: traigo estudios previos..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Enviar solicitud de turno</button>
+          <button type="button" class="btn btn-outline" onclick="limpiarFormulario()">Limpiar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== SECCIÓN: DATOS PERSONALES ===== -->
+    <div id="seccion-datos" class="seccion">
+      <div class="seccion-header">
+        <h3>Datos personales</h3>
+        <p>Podés modificar tus datos de contacto y cobertura médica cuando lo necesites.</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:18px;">
+        <strong>Atención:</strong> Los campos de identidad (DNI, Tipo de Doc. y CUIL) están protegidos. Si requerís cambiarlos, contactá a la administración.
+      </div>
+
+      <form id="formDatos" onsubmit="guardarModificacionDatos(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre <span class="req">*</span></label>
+            <input type="text" id="datoNombre" required>
+          </div>
+          <div class="form-group">
+            <label>Apellido <span class="req">*</span></label>
+            <input type="text" id="datoApellido" required>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Documento</label>
+            <input type="text" id="datoTipoDoc" readonly title="No modificable">
+          </div>
+          <div class="form-group">
+            <label>Número de Documento</label>
+            <input type="text" id="datoNumDoc" readonly title="No modificable">
+          </div>
+          <div class="form-group">
+            <label>CUIL</label>
+            <input type="text" id="datoCuil" readonly title="No modificable">
+          </div>
+          <div class="form-group">
+            <label>Sexo <span class="req">*</span></label>
+            <select id="datoSexo" required>
+              <option value="Femenino">Femenino</option>
+              <option value="Masculino">Masculino</option>
+              <option value="X">X / No binario</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fecha de Nacimiento <span class="req">*</span></label>
+            <input type="date" id="datoFechaNac" required>
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico (@ y .com) <span class="req">*</span></label>
+            <input type="email" id="datoEmail" required placeholder="ejemplo@correo.com">
+          </div>
+
+          <div class="form-group">
+            <label>Obra Social / Prepaga <span class="req">*</span></label>
+            <select id="datoObra" required onchange="evaluarObraSocialVista()">
+              <option value="Particular">Particular</option>
+              <option value="OSDE">OSDE</option>
+              <option value="Swiss Medical">Swiss Medical</option>
+              <option value="Galeno">Galeno</option>
+              <option value="Medicus">Medicus</option>
+              <option value="PAMI">PAMI</option>
+              <option value="IOMA">IOMA</option>
+              <option value="Otra">Otra</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Plan / S <span class="req" id="datoReqPlan">*</span></label>
+            <input type="text" id="datoPlan" required placeholder="Ej: 210">
+          </div>
+          <div class="form-group">
+            <label>Número de Afiliado <span class="req" id="datoReqAfiliado">*</span></label>
+            <input type="text" id="datoAfiliado" required placeholder="Nº de carnet">
+          </div>
+
+          <div class="form-group">
+            <label>Teléfono <span class="req">*</span></label>
+            <input type="tel" id="datoTelefono" required oninput="sincronizarTelefonoVista()">
+          </div>
+          <div class="form-group">
+            <label>WhatsApp <span class="req">*</span></label>
+            <input type="tel" id="datoWhatsapp" required>
+            <button type="button" class="btn-copiar-telefono" onclick="copiarTelefonoAWhatsappVista()">
+              <input type="checkbox" id="checkMismoTelVista" style="width: auto; margin:0;" onchange="copiarTelefonoAWhatsappVista()"> Usar mi número de teléfono
+            </button>
+          </div>
+
+          <div class="form-group full">
+            <label>Dirección <span class="req">*</span></label>
+            <input type="text" id="datoDireccion" required>
+          </div>
+          <div class="form-group">
+            <label>Código Postal (CP) <span class="req">*</span></label>
+            <input type="text" id="datoCp" required>
+          </div>
+          <div class="form-group">
+            <label>País <span class="req">*</span></label>
+            <select id="datoPais" required>
+              <option value="Argentina" selected>Argentina</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Provincia <span class="req">*</span></label>
+            <select id="datoProvincia" required onchange="cargarLocalidadesVista(this.value)">
+              <option value="">Seleccionar Provincia...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ciudad / Localidad / Pueblo <span class="req">*</span></label>
+            <select id="datoCiudad" required>
+              <option value="">Seleccionar Provincia primero...</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">💾 Guardar cambios</button>
+          <button type="button" class="btn btn-outline" onclick="actualizarVistaDatos()">Deshacer cambios</button>
+          <button type="button" class="btn btn-outline" onclick="mostrarSeccion('inicio')">Volver al inicio</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== PRÓXIMO TURNO MÁS CERCANO (ABAJO) ===== -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Próximo turno</h3>
+        <p>Tu turno más cercano</p>
+      </div>
+      <div id="proximoTurnoAbajo">
+        <p class="empty-msg">Cargando turnos...</p>
+      </div>
+    </div>
+
+    <!-- ===== CONTACTOS DEL CONSULTORIO (ABAJO) ===== -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📞 Contactos del consultorio</h3>
+        <p>Canales de comunicación disponibles</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="icon">📞</div>
+          <strong>Teléfono</strong>
+          <a href="tel:+541145678900">11 4567-8900</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">💬</div>
+          <strong>WhatsApp</strong>
+          <a href="https://wa.me/5491145678900" target="_blank">Enviar mensaje</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">✉</div>
+          <strong>Email</strong>
+          <a href="mailto:turnos@mediturnos.com">turnos@mediturnos.com</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">📍</div>
+          <strong>Dirección</strong>
+          <a href="#">Av. Santa Fe 1234, CABA</a>
+        </div>
+      </div>
+      <div class="info-box">
+        <strong>Horario de atención telefónica:</strong> Lunes a viernes de 9:00 a 18:00 hs.<br>
+        Para cancelaciones o cambios, avisá con al menos 24 horas de anticipación.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // LÓGICA DE MODO OSCURO
+  // ============================================================
+  function toggleDarkMode() {
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+
+    localStorage.setItem('modo_oscuro', isDark ? 'enabled' : 'disabled');
+
+    const icon = document.getElementById('themeIcon');
+    const text = document.getElementById('themeText');
+
+    if (isDark) {
+      if (icon) icon.textContent = '☀️';
+      if (text) text.textContent = 'Modo Claro';
+    } else {
+      if (icon) icon.textContent = '🌙';
+      if (text) text.textContent = 'Modo Oscuro';
+    }
+  }
+
+  function cargarPreferenciaModoOscuro() {
+    const modoGuardado = localStorage.getItem('modo_oscuro');
+    if (modoGuardado === 'enabled') {
+      document.body.classList.add('dark-mode');
+      const icon = document.getElementById('themeIcon');
+      const text = document.getElementById('themeText');
+      if (icon) icon.textContent = '☀️';
+      if (text) text.textContent = 'Modo Claro';
+    }
+  }
+
+  // ============================================================
+  // LÓGICA DE CAMBIO DE CONTRASEÑA
+  // ============================================================
+  function abrirModalPassword() {
+    document.getElementById('formCambiarPassword').reset();
+    const modal = document.getElementById('modalCambiarPassword');
+    if (modal) modal.classList.add('active');
+  }
+
+  function cerrarModalPassword() {
+    const modal = document.getElementById('modalCambiarPassword');
+    if (modal) modal.classList.remove('active');
+  }
+
+  async function guardarNuevaPassword(event) {
+    event.preventDefault();
+
+    const passActual = document.getElementById('passActual').value;
+    const passNueva = document.getElementById('passNueva').value;
+    const passConfirmar = document.getElementById('passConfirmar').value;
+
+    if (passNueva !== passConfirmar) {
+      alert('⚠️ La nueva contraseña y la confirmación no coinciden.');
+      return;
+    }
+
+    if (passNueva.length < 6) {
+      alert('⚠️ La nueva contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    const usuarioActivoRaw = localStorage.getItem('usuario_activo');
+    if (!usuarioActivoRaw) {
+      alert('Error: No se encontró la sesión activa.');
+      return;
+    }
+
+    const usuarioActivo = JSON.parse(usuarioActivoRaw);
+    const dniActual = usuarioActivo.dni || usuarioActivo.usuario;
+
+    try {
+      const respuesta = await fetch('/api/pacientes/cambiar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dni: dniActual,
+          passActual: passActual,
+          passNueva: passNueva
+        })
+      });
+
+      const resData = await respuesta.json().catch(() => ({}));
+
+      if (!respuesta.ok) {
+        alert(resData.mensaje || '❌ La contraseña actual es incorrecta.');
+        return;
+      }
+
+      usuarioActivo.password = passNueva;
+      localStorage.setItem('usuario_activo', JSON.stringify(usuarioActivo));
+
+      showToast('🔑 ¡Contraseña cambiada con éxito!');
+      cerrarModalPassword();
+
+    } catch (error) {
+      console.error('Error al conectar con el servidor:', error);
+      alert('⚠️ No se pudo conectar con el servidor para actualizar la contraseña.');
+    }
+  }
+
+  // ============================================================
+  // CONSUMO DE API OFICIAL DE PROVINCIAS Y LOCALIDADES (GEOREF AR)
+  // ============================================================
+  let cacheProvincias = [];
+
+  async function inicializarProvinciasGeoref() {
+    const regProv = document.getElementById('regProvincia');
+    const datoProv = document.getElementById('datoProvincia');
+
+    if (regProv) regProv.innerHTML = '<option value="">Cargando provincias...</option>';
+    if (datoProv) datoProv.innerHTML = '<option value="">Cargando provincias...</option>';
+
+    try {
+      const res = await fetch('https://apis.datos.gob.ar/georef/api/provincias?campos=id,nombre');
+      const data = await res.json();
+      
+      cacheProvincias = data.provincias.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      let optionsHtml = '<option value="">Seleccionar Provincia...</option>';
+      cacheProvincias.forEach(p => {
+        optionsHtml += `<option value="${p.nombre}">${p.nombre}</option>`;
+      });
+
+      if (regProv) regProv.innerHTML = optionsHtml;
+      if (datoProv) datoProv.innerHTML = optionsHtml;
+    } catch (error) {
+      console.error('Error al obtener provincias oficiales:', error);
+      const fallbackError = '<option value="">Error al cargar provincias</option>';
+      if (regProv) regProv.innerHTML = fallbackError;
+      if (datoProv) datoProv.innerHTML = fallbackError;
+    }
+  }
+
+  async function cargarLocalidadesModal(nombreProvincia, localidadPreseleccionada = '') {
+    const regCiudad = document.getElementById('regCiudad');
+    if (!nombreProvincia) {
+      regCiudad.innerHTML = '<option value="">Seleccionar Provincia primero...</option>';
+      return;
+    }
+
+    regCiudad.innerHTML = '<option value="">Cargando pueblos y ciudades...</option>';
+
+    try {
+      const url = `https://apis.datos.gob.ar/georef/api/localidades?provincia=${encodeURIComponent(nombreProvincia)}&max=1000&campos=id,nombre`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const localidades = data.localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      let html = '<option value="">Seleccionar Localidad / Pueblo...</option>';
+      localidades.forEach(loc => {
+        const selected = loc.nombre === localidadPreseleccionada ? 'selected' : '';
+        html += `<option value="${loc.nombre}" ${selected}>${loc.nombre}</option>`;
+      });
+
+      regCiudad.innerHTML = html;
+    } catch (error) {
+      console.error('Error al cargar localidades:', error);
+      regCiudad.innerHTML = '<option value="">Error al cargar localidades</option>';
+    }
+  }
+
+  async function cargarLocalidadesVista(nombreProvincia, localidadPreseleccionada = '') {
+    const datoCiudad = document.getElementById('datoCiudad');
+    if (!nombreProvincia) {
+      datoCiudad.innerHTML = '<option value="">Seleccionar Provincia primero...</option>';
+      return;
+    }
+
+    datoCiudad.innerHTML = '<option value="">Cargando pueblos y ciudades...</option>';
+
+    try {
+      const url = `https://apis.datos.gob.ar/georef/api/localidades?provincia=${encodeURIComponent(nombreProvincia)}&max=1000&campos=id,nombre`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const localidades = data.localidades.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      let html = '<option value="">Seleccionar Localidad / Pueblo...</option>';
+      localidades.forEach(loc => {
+        const selected = loc.nombre === localidadPreseleccionada ? 'selected' : '';
+        html += `<option value="${loc.nombre}" ${selected}>${loc.nombre}</option>`;
+      });
+
+      datoCiudad.innerHTML = html;
+    } catch (error) {
+      console.error('Error al cargar localidades:', error);
+      datoCiudad.innerHTML = '<option value="">Error al cargar localidades</option>';
+    }
+  }
+
+  // ============================================================
+  // DATOS DEL PACIENTE Y TURNOS GLOBALES
+  // ============================================================
+  let paciente = {
+    nombre: 'Paciente',
+    dni: '',
+    telefono: '',
+    email: '',
+    obra: 'Particular',
+    afiliado: ''
+  };
+
+  let datosConfirmados = false;
+  let turnosFuturos = [];
+  let turnosAnteriores = [];
+  let todosLosTurnosGlobales = []; // Guarda la base completa del servidor para bloquear turnos duplicados
+
+  // ============================================================
+  // COPIAR TELÉFONO A WHATSAPP
+  // ============================================================
+  function copiarTelefonoAWhatsappModal() {
+    const check = document.getElementById('checkMismoTelModal');
+    const tel = document.getElementById('regTelefono').value;
+    const whatsappInput = document.getElementById('regWhatsapp');
+
+    if (check.checked) {
+      whatsappInput.value = tel;
+    }
+  }
+
+  function sincronizarTelefonoModal() {
+    const check = document.getElementById('checkMismoTelModal');
+    if (check && check.checked) {
+      copiarTelefonoAWhatsappModal();
+    }
+  }
+
+  function copiarTelefonoAWhatsappVista() {
+    const check = document.getElementById('checkMismoTelVista');
+    const tel = document.getElementById('datoTelefono').value;
+    const whatsappInput = document.getElementById('datoWhatsapp');
+
+    if (check.checked) {
+      whatsappInput.value = tel;
+    }
+  }
+
+  function sincronizarTelefonoVista() {
+    const check = document.getElementById('checkMismoTelVista');
+    if (check && check.checked) {
+      copiarTelefonoAWhatsappVista();
+    }
+  }
+
+  // ============================================================
+  // EVALUAR OBRA SOCIAL (MODAL Y VISTA)
+  // ============================================================
+  function evaluarObraSocialModal() {
+    const obraSelect = document.getElementById('regObraSocial');
+    const inputPlan = document.getElementById('regPlan');
+    const inputAfiliado = document.getElementById('regNumAfiliado');
+    const reqPlan = document.getElementById('reqPlan');
+    const reqAfiliado = document.getElementById('reqAfiliado');
+
+    if (obraSelect.value === 'Particular') {
+      inputPlan.value = 'N/A';
+      inputPlan.disabled = true;
+      inputPlan.required = false;
+      if (reqPlan) reqPlan.style.display = 'none';
+
+      inputAfiliado.value = 'N/A';
+      inputAfiliado.disabled = true;
+      inputAfiliado.required = false;
+      if (reqAfiliado) reqAfiliado.style.display = 'none';
+    } else {
+      if (inputPlan.disabled) {
+        inputPlan.value = '';
+        inputPlan.disabled = false;
+      }
+      inputPlan.required = true;
+      if (reqPlan) reqPlan.style.display = 'inline';
+
+      if (inputAfiliado.disabled) {
+        inputAfiliado.value = '';
+        inputAfiliado.disabled = false;
+      }
+      inputAfiliado.required = true;
+      if (reqAfiliado) reqAfiliado.style.display = 'inline';
+    }
+  }
+
+  function evaluarObraSocialVista() {
+    const obraSelect = document.getElementById('datoObra');
+    const inputPlan = document.getElementById('datoPlan');
+    const inputAfiliado = document.getElementById('datoAfiliado');
+    const reqPlan = document.getElementById('datoReqPlan');
+    const reqAfiliado = document.getElementById('datoReqAfiliado');
+
+    if (obraSelect.value === 'Particular') {
+      inputPlan.value = 'N/A';
+      inputPlan.disabled = true;
+      inputPlan.required = false;
+      if (reqPlan) reqPlan.style.display = 'none';
+
+      inputAfiliado.value = 'N/A';
+      inputAfiliado.disabled = true;
+      inputAfiliado.required = false;
+      if (reqAfiliado) reqAfiliado.style.display = 'none';
+    } else {
+      if (inputPlan.disabled) {
+        inputPlan.value = '';
+        inputPlan.disabled = false;
+      }
+      inputPlan.required = true;
+      if (reqPlan) reqPlan.style.display = 'inline';
+
+      if (inputAfiliado.disabled) {
+        inputAfiliado.value = '';
+        inputAfiliado.disabled = false;
+      }
+      inputAfiliado.required = true;
+      if (reqAfiliado) reqAfiliado.style.display = 'inline';
+    }
+  }
+
+  // ============================================================
+  // COMPROBACIÓN Y LECTURA DEL USUARIO LOGUEADO
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', async function() {
+    cargarPreferenciaModoOscuro();
+    if (typeof inicializarProvinciasGeoref === 'function') {
+      await inicializarProvinciasGeoref();
+    }
+    cargarUsuarioActivo();
+  });
+
+  function cargarUsuarioActivo() {
+    const usuarioActivoRaw = localStorage.getItem('usuario_activo');
+
+    if (!usuarioActivoRaw) {
+      alert('Debés iniciar sesión para acceder al sistema.');
+      window.location.href = 'pacientes-login.html';
+      return;
+    }
+
+    const usuarioActivo = JSON.parse(usuarioActivoRaw);
+    const dniActual = usuarioActivo.dni || usuarioActivo.usuario;
+
+    paciente.nombre = usuarioActivo.nombre || 'Paciente';
+    paciente.dni = dniActual || '';
+    paciente.telefono = usuarioActivo.telefono || '';
+    paciente.obra = usuarioActivo.obra || 'Particular';
+
+    const chipNombre = document.getElementById('chipNombre');
+    const chipIniciales = document.getElementById('chipIniciales');
+
+    if (chipNombre) chipNombre.textContent = paciente.nombre;
+    if (chipIniciales) {
+      const partes = paciente.nombre.trim().split(/\s+/);
+      const ini1 = partes[0] ? partes[0].charAt(0).toUpperCase() : '';
+      const ini2 = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
+      chipIniciales.textContent = (ini1 + ini2) || '--';
+    }
+
+    const vistaNombre = document.getElementById('vistaNombre');
+    const vistaDni = document.getElementById('vistaDni');
+    const vistaTelefono = document.getElementById('vistaTelefono');
+    const vistaObra = document.getElementById('vistaObra');
+
+    if (vistaNombre) vistaNombre.textContent = paciente.nombre;
+    if (vistaDni) vistaDni.textContent = paciente.dni;
+    if (vistaTelefono) vistaTelefono.textContent = paciente.telefono;
+    if (vistaObra) vistaObra.textContent = paciente.obra;
+
+    const registradoLocal = localStorage.getItem(`pacienteRegistrado_${dniActual}`);
+    const datosLocales = JSON.parse(localStorage.getItem(`datosPaciente_${dniActual}`));
+
+    if (registradoLocal === 'true' && datosLocales) {
+      actualizarVistaDatos(datosLocales);
+    } else {
+      const modal = document.getElementById('modalRegistroObligatorio');
+      if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      const inputNombre = document.getElementById('regNombre');
+      const inputApellido = document.getElementById('regApellido');
+      const inputDni = document.getElementById('regNumDoc');
+      const inputTel = document.getElementById('regTelefono');
+      const inputObra = document.getElementById('regObraSocial');
+
+      if (paciente.nombre && paciente.nombre !== 'Paciente') {
+        const partesNombre = paciente.nombre.trim().split(/\s+/);
+        if (inputNombre) inputNombre.value = partesNombre[0] || '';
+        if (inputApellido) inputApellido.value = partesNombre.slice(1).join(' ') || partesNombre[0];
+      }
+
+      if (inputDni) inputDni.value = paciente.dni;
+      if (inputTel) inputTel.value = paciente.telefono;
+      if (inputObra) {
+        inputObra.value = paciente.obra || 'Particular';
+        evaluarObraSocialModal();
+      }
+    }
+  }
+
+  async function guardarDatosNuevos(event) {
+    event.preventDefault();
+
+    const emailInput = document.getElementById('regEmail').value.trim();
+    const dniInput = document.getElementById('regNumDoc').value.trim();
+
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/;
+    if (!regexEmail.test(emailInput)) {
+      alert('Por favor ingresá un correo electrónico válido que incluya "@" y termine en ".com" (Ej: ejemplo@correo.com)');
+      document.getElementById('regEmail').focus();
+      return;
+    }
+
+    const datosPaciente = {
+      nombre: document.getElementById('regNombre').value.trim(),
+      apellido: document.getElementById('regApellido').value.trim(),
+      tipoDoc: document.getElementById('regTipoDoc').value,
+      numDoc: dniInput,
+      cuil: document.getElementById('regCuil').value.trim(),
+      sexo: document.getElementById('regSexo').value,
+      fechaNacimiento: document.getElementById('regFechaNac').value,
+      email: emailInput,
+      obraSocial: document.getElementById('regObraSocial').value || paciente.obra,
+      plan: document.getElementById('regPlan').value.trim(),
+      numAfiliado: document.getElementById('regNumAfiliado').value.trim(),
+      telefono: document.getElementById('regTelefono').value.trim(),
+      whatsapp: document.getElementById('regWhatsapp').value.trim(),
+      direccion: document.getElementById('regDireccion').value.trim(),
+      cp: document.getElementById('regCp').value.trim(),
+      ciudad: document.getElementById('regCiudad').value,
+      provincia: document.getElementById('regProvincia').value,
+      pais: document.getElementById('regPais').value
+    };
+
+    try {
+      await fetch('/api/pacientes/registro-completo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosPaciente)
+      }).catch(err => console.log('Guardando datos de manera local...'));
+
+      localStorage.setItem(`pacienteRegistrado_${dniInput}`, 'true');
+      localStorage.setItem(`datosPaciente_${dniInput}`, JSON.stringify(datosPaciente));
+
+      actualizarVistaDatos(datosPaciente);
+
+      document.getElementById('modalRegistroObligatorio').classList.remove('active');
+      document.body.style.overflow = 'auto';
+
+      showToast('¡Datos registrados con éxito! Ya podés solicitar tu turno.');
+    } catch (error) {
+      console.error('Error al guardar datos:', error);
+    }
+  }
+
+  // ============================================================
+  // MODIFICACIÓN Y GUARDADO DE DATOS PERSONALES DESDE LA VISTA
+  // ============================================================
+  async function guardarModificacionDatos(event) {
+    event.preventDefault();
+
+    const emailInput = document.getElementById('datoEmail').value.trim();
+    const dniInput = document.getElementById('datoNumDoc').value.trim();
+
+    const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/;
+    if (!regexEmail.test(emailInput)) {
+      alert('Por favor ingresá un correo electrónico válido que incluya "@" y termine en ".com"');
+      document.getElementById('datoEmail').focus();
+      return;
+    }
+
+    const datosActualizados = {
+      nombre: document.getElementById('datoNombre').value.trim(),
+      apellido: document.getElementById('datoApellido').value.trim(),
+      tipoDoc: document.getElementById('datoTipoDoc').value,
+      numDoc: dniInput,
+      cuil: document.getElementById('datoCuil').value,
+      sexo: document.getElementById('datoSexo').value,
+      fechaNacimiento: document.getElementById('datoFechaNac').value,
+      email: emailInput,
+      obraSocial: document.getElementById('datoObra').value,
+      plan: document.getElementById('datoPlan').value.trim(),
+      numAfiliado: document.getElementById('datoAfiliado').value.trim(),
+      telefono: document.getElementById('datoTelefono').value.trim(),
+      whatsapp: document.getElementById('datoWhatsapp').value.trim(),
+      direccion: document.getElementById('datoDireccion').value.trim(),
+      cp: document.getElementById('datoCp').value.trim(),
+      ciudad: document.getElementById('datoCiudad').value,
+      provincia: document.getElementById('datoProvincia').value,
+      pais: document.getElementById('datoPais').value
+    };
+
+    try {
+      await fetch('/api/pacientes/modificar', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosActualizados)
+      }).catch(err => console.log('Sincronizando modificaciones de manera local...'));
+
+      localStorage.setItem(`datosPaciente_${dniInput}`, JSON.stringify(datosActualizados));
+
+      actualizarVistaDatos(datosActualizados);
+      showToast('¡Tus datos personales fueron actualizados correctamente!');
+    } catch (error) {
+      console.error('Error al actualizar datos:', error);
+      showToast('Error al intentar guardar los datos.');
+    }
+  }
+
+  // ============================================================
+  // OBTENER INICIALES
+  // ============================================================
+  function obtenerIniciales(nombre, apellido) {
+    const primerNombre = (nombre || '').trim().split(/\s+/)[0] || '';
+    const apellidos = (apellido || '').trim().split(/\s+/).filter(Boolean);
+    const ultimoApellido = apellidos.length > 0 ? apellidos[apellidos.length - 1] : '';
+
+    const inicialN = primerNombre.charAt(0).toUpperCase();
+    const inicialA = ultimoApellido.charAt(0).toUpperCase();
+
+    return (inicialN + inicialA) || '--';
+  }
+
+  // ============================================================
+  // ACTUALIZAR VISTA DE DATOS PERSONALES
+  // ============================================================
+  async function actualizarVistaDatos(datosCargados = null) {
+    const usuarioActivoRaw = localStorage.getItem('usuario_activo');
+    const usuarioActivo = usuarioActivoRaw ? JSON.parse(usuarioActivoRaw) : {};
+    const dniActual = paciente.dni || usuarioActivo.dni || usuarioActivo.usuario;
+
+    const datosGuardados = datosCargados || JSON.parse(localStorage.getItem(`datosPaciente_${dniActual}`));
+
+    let nombreParaIniciales = paciente.nombre.split(' ')[0] || '';
+    let apellidoParaIniciales = paciente.nombre.split(' ')[1] || '';
+
+    if (datosGuardados) {
+      paciente.nombre = `${datosGuardados.nombre} ${datosGuardados.apellido}`;
+      paciente.dni = datosGuardados.numDoc || dniActual;
+      paciente.telefono = datosGuardados.telefono || paciente.telefono;
+      paciente.obra = datosGuardados.obraSocial || paciente.obra;
+
+      nombreParaIniciales = datosGuardados.nombre || '';
+      apellidoParaIniciales = datosGuardados.apellido || '';
+
+      document.getElementById('datoNombre').value = datosGuardados.nombre || '';
+      document.getElementById('datoApellido').value = datosGuardados.apellido || '';
+      document.getElementById('datoTipoDoc').value = datosGuardados.tipoDoc || 'DNI';
+      document.getElementById('datoNumDoc').value = datosGuardados.numDoc || dniActual;
+      document.getElementById('datoCuil').value = datosGuardados.cuil || '';
+      document.getElementById('datoSexo').value = datosGuardados.sexo || 'Femenino';
+      document.getElementById('datoFechaNac').value = datosGuardados.fechaNacimiento || '';
+      document.getElementById('datoEmail').value = datosGuardados.email || '';
+      document.getElementById('datoObra').value = datosGuardados.obraSocial || 'Particular';
+      document.getElementById('datoPlan').value = datosGuardados.plan || '';
+      document.getElementById('datoAfiliado').value = datosGuardados.numAfiliado || '';
+      document.getElementById('datoTelefono').value = datosGuardados.telefono || '';
+      document.getElementById('datoWhatsapp').value = datosGuardados.whatsapp || '';
+      document.getElementById('datoDireccion').value = datosGuardados.direccion || '';
+      document.getElementById('datoCp').value = datosGuardados.cp || '';
+
+      const prov = datosGuardados.provincia || 'Buenos Aires';
+      const ciudad = datosGuardados.ciudad || '';
+
+      document.getElementById('datoProvincia').value = prov;
+      if (prov) {
+        await cargarLocalidadesVista(prov, ciudad);
+      }
+    } else {
+      document.getElementById('datoNombre').value = paciente.nombre.split(' ')[0] || '';
+      document.getElementById('datoApellido').value = paciente.nombre.split(' ')[1] || '';
+      document.getElementById('datoTipoDoc').value = 'DNI';
+      document.getElementById('datoNumDoc').value = paciente.dni;
+      document.getElementById('datoTelefono').value = paciente.telefono;
+      document.getElementById('datoObra').value = paciente.obra;
+
+      document.getElementById('datoProvincia').value = 'Buenos Aires';
+      await cargarLocalidadesVista('Buenos Aires');
+    }
+
+    evaluarObraSocialVista();
+
+    document.getElementById('vistaNombre').textContent = paciente.nombre;
+    document.getElementById('vistaDni').textContent = paciente.dni;
+    document.getElementById('vistaTelefono').textContent = paciente.telefono;
+    document.getElementById('vistaObra').textContent = paciente.obra;
+    document.getElementById('chipNombre').textContent = paciente.nombre;
+
+    const iniciales = obtenerIniciales(nombreParaIniciales, apellidoParaIniciales);
+    const chipIniciales = document.getElementById('chipIniciales');
+    if (chipIniciales) chipIniciales.textContent = iniciales;
+  }
+
+  function confirmarDatosOk() {
+    datosConfirmados = true;
+    document.getElementById('datosOkBadge').classList.add('show');
+    showToast('Datos confirmados. Ya podés solicitar el turno.');
+  }
+
+  // ============================================================
+  // PAGINACIÓN DEL HISTORIAL DE TURNOS
+  // ============================================================
+  let historialPaginaActual = 1;
+  let historialPageSize = 10;
+
+  // ============================================================
+  // MOSTRAR/OCULTAR SECCIONES
+  // ============================================================
+  function mostrarSeccion(id) {
+    document.querySelectorAll('.seccion').forEach(el => {
+      el.classList.remove('activa');
+    });
+
+    const seccion = document.getElementById('seccion-' + id);
+    if (seccion) {
+      seccion.classList.add('activa');
+    }
+
+    const titulos = {
+      'inicio': 'Turnos Online',
+      'mis-turnos': 'Mis turnos',
+      'confirmar-turno': 'Confirmar turno',
+      'nuevo-turno': 'Solicitar turno',
+      'datos': 'Datos personales'
+    };
+    document.getElementById('tituloSeccion').textContent = titulos[id] || 'Turnos Online';
+
+    document.querySelectorAll('.side-item').forEach(el => {
+      el.classList.remove('active');
+    });
+
+    const map = {
+      'inicio': 0,
+      'mis-turnos': 1,
+      'datos': 2
+    };
+    const idx = map[id];
+    if (idx !== undefined) {
+      const items = document.querySelectorAll('.side-item');
+      if (items[idx]) items[idx].classList.add('active');
+    }
+
+    if (id === 'mis-turnos' || id === 'confirmar-turno' || id === 'nuevo-turno') {
+      cargarTurnosDesdeBackend();
+    }
+
+    window.scrollTo({ top: 200, behavior: 'smooth' });
+  }
+
+  // ============================================================
+  // CANCELAR TURNO (CON RESTRICCIÓN DE 24 HORAS PREVIAS)
+  // ============================================================
+  async function cancelarTurno(index) {
+    const turnoACancelar = turnosFuturos[index];
+    if (!turnoACancelar) return;
+
+    const ahora = new Date();
+
+    let fechaTurnoStr = turnoACancelar.iso || turnoACancelar.date;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(fechaTurnoStr)) {
+      const partes = fechaTurnoStr.split('/');
+      fechaTurnoStr = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    const horaTurnoStr = turnoACancelar.time24 || turnoACancelar.time || '00:00';
+    const fechaHoraTurno = new Date(`${fechaTurnoStr}T${horaTurnoStr}:00`);
+
+    const diferenciaMs = fechaHoraTurno - ahora;
+    const horasFaltantes = diferenciaMs / (1000 * 60 * 60);
+
+    if (horasFaltantes < 24) {
+      alert('⚠️ No es posible cancelar el turno.\n\nLas cancelaciones solo se permiten con al menos 24 horas de anticipación. Por favor, comunicate directamente con el consultorio.');
+      showToast('Cancelación no permitida (menos de 24 hs restantes)');
+      return;
+    }
+
+    if (!confirm(`¿Estás seguro de que querés cancelar tu turno del ${turnoACancelar.date} a las ${turnoACancelar.time} hs?`)) return;
+
+    try {
+      await fetch('/api/turnos/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha: turnoACancelar.date, hora: turnoACancelar.time, paciente: paciente.nombre })
+      }).catch(err => console.log('Sincronizando de forma local...'));
+
+      showToast('El turno ha sido cancelado exitosamente');
+      await cargarTurnosDesdeBackend();
+    } catch (error) {
+      console.error('Error al cancelar el turno:', error);
+      showToast('Error al cancelar el turno');
+    }
+  }
+
+  function modificarTurno(index) {
+    showToast('Seleccioná un nuevo día y horario para trasladar tu turno');
+    mostrarSeccion('nuevo-turno');
+  }
+
+  // ============================================================
+  // GENERAR VISTA DEL COMPROBANTE
+  // ============================================================
+  function generarElementoComprobante() {
+    if (turnosFuturos.length === 0) return null;
+
+    const turno = turnosFuturos[0];
+
+    let printArea = document.getElementById('comprobanteTurnoArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'comprobanteTurnoArea';
+      document.body.appendChild(printArea);
+    }
+
+    printArea.innerHTML = `
+      <div style="text-align: center; border-bottom: 2px solid #1a7a4c; padding-bottom: 12px; margin-bottom: 20px;">
+        <h1 style="color: #1a7a4c; margin: 0; font-size: 24px;">Medi-Turnos</h1>
+        <p style="font-size: 14px; color: #555; margin-top: 4px;">Comprobante Oficial de Turno Médico</p>
+      </div>
+      
+      <div style="background: #f0faf4; border: 1px solid #b7d4c4; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="color: #1a7a4c; margin-top: 0; font-size: 16px; border-bottom: 1px solid #b7d4c4; padding-bottom: 6px;">Datos del Paciente</h3>
+        <p style="margin: 6px 0;"><strong>Nombre completo:</strong> ${paciente.nombre}</p>
+        <p style="margin: 6px 0;"><strong>DNI:</strong> ${paciente.dni}</p>
+        <p style="margin: 6px 0;"><strong>Teléfono:</strong> ${paciente.telefono}</p>
+        <p style="margin: 6px 0;"><strong>Obra Social:</strong> ${paciente.obra}</p>
+      </div>
+
+      <div style="border: 2px solid #1a7a4c; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="color: #1a7a4c; margin-top: 0; font-size: 16px; border-bottom: 1px solid #1a7a4c; padding-bottom: 6px;">Detalles de la Cita</h3>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Fecha del turno:</strong> ${turno.date}</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Horario:</strong> ${turno.time} hs</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Especialidad / Consulta:</strong> ${turno.type}</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Estado actual:</strong> <span style="text-transform: uppercase; font-weight: bold;">${turno.status}</span></p>
+      </div>
+
+      <div style="margin-top: 30px; border-top: 1px dashed #aaa; padding-top: 12px; font-size: 12px; color: #666; text-align: center;">
+        <p style="margin: 4px 0;"><strong>Centro Médico Medi-Turnos</strong> — Av. Santa Fe 1234, CABA</p>
+        <p style="margin: 4px 0;">Atención al paciente: 11 4567-8900 | turnos@mediturnos.com</p>
+        <p style="margin: 8px 0 0; font-style: italic;">Por favor presentate con DNI y carnet de obra social 10 minutos antes de tu turno.</p>
+      </div>
+    `;
+
+    return printArea;
+  }
+
+  // ============================================================
+  // IMPRIMIR COMPROBANTE DE TURNO
+  // ============================================================
+  function imprimirComprobanteTurno() {
+    const area = generarElementoComprobante();
+    if (!area) {
+      showToast('No hay ningún turno próximo para imprimir');
+      return;
+    }
+    window.print();
+  }
+
+  // ============================================================
+  // DESCARGAR COMPROBANTE EN PDF
+  // ============================================================
+  function descargarPDFTurno() {
+    const element = generarElementoComprobante();
+    if (!element) {
+      showToast('No hay ningún turno próximo para descargar');
+      return;
+    }
+
+    showToast('Generando archivo PDF...');
+
+    const opt = {
+      margin:       10,
+      filename:     `Comprobante_Turno_${paciente.nombre.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // ============================================================
+  // CARGAR TURNOS DESDE BACKEND Y BLOQUEAR OCUPADOS
+  // ============================================================
+  async function cargarTurnosDesdeBackend() {
+    try {
+      const respuesta = await fetch('/api/turnos');
+      const data = await respuesta.json();
+      todosLosTurnosGlobales = data || [];
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      function convertirFechaTurno(fecha, hora) {
+        if (!fecha) return new Date('invalid');
+        const horaSegura = hora || '00:00';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+          return new Date(fecha + 'T' + horaSegura);
+        }
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+          const partes = fecha.split('/');
+          return new Date(`${partes[2]}-${partes[1]}-${partes[0]}T${horaSegura}`);
+        }
+        return new Date(fecha + 'T' + horaSegura);
+      }
+
+      // Filtrar únicamente los turnos del paciente que está logueado
+      const turnosDelPaciente = todosLosTurnosGlobales.filter(t => t.paciente === paciente.nombre);
+
+      const turnosProcesados = turnosDelPaciente.map(t => {
+        const fechaTurno = convertirFechaTurno(t.fecha, t.hora);
+        const esPasado = !Number.isNaN(fechaTurno.getTime()) && fechaTurno < hoy;
+        const estado = t.estado || (esPasado ? 'Atendido' : 'Pendiente');
+
+        return {
+          date: t.fecha,
+          time: t.hora,
+          type: 'Control dermatológico (' + t.profesional + ')',
+          status: estado,
+          cls: estado === 'Confirmado' ? 'confirmed' : (estado === 'Atendido' ? 'attended' : (estado === 'Cancelado' ? 'cancelled' : 'pending')),
+          iso: t.fecha,
+          time24: t.hora,
+          esPasado: esPasado
+        };
+      });
+
+      turnosAnteriores = turnosProcesados.filter(t => t.esPasado || t.status === 'Cancelado').sort((a, b) => {
+        return convertirFechaTurno(b.date, b.time) - convertirFechaTurno(a.date, a.time);
+      });
+
+      turnosFuturos = turnosProcesados.filter(t => !t.esPasado && t.status !== 'Cancelado').sort((a, b) => {
+        return convertirFechaTurno(a.date, a.time) - convertirFechaTurno(b.date, b.time);
+      });
+
+      historialPaginaActual = 1;
+      renderMisTurnos();
+      renderConfirmarTurno();
+      renderProximoTurnoAbajo();
+
+      // Si hay una fecha seleccionada en el calendario, actualizar slots ocupados en vivo
+      if (selectedDate) {
+        renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
+      }
+    } catch (error) {
+      console.error('Error al cargar turnos del servidor:', error);
+      showToast('No se pudieron sincronizar los turnos con el servidor');
+    }
+  }
+
+  // ============================================================
+  // RENDER: PRÓXIMO TURNO (ABAJO)
+  // ============================================================
+  function renderProximoTurnoAbajo() {
+    const box = document.getElementById('proximoTurnoAbajo');
+    if (!box) return;
+
+    if (turnosFuturos.length === 0) {
+      box.innerHTML = `<p class="empty-msg">No tenés turnos próximos.</p>`;
+    } else {
+      const p = turnosFuturos[0];
+      box.innerHTML = `
+        <div style="background:var(--green-light); border:2px solid var(--green); border-radius:14px; padding:16px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; position:relative;">
+          <div style="background:var(--green); color:white; font-size:15px; padding:10px 14px; min-width:70px; border-radius:10px; font-weight:700; text-align:center;">${p.time}</div>
+          <div style="flex:1;">
+            <strong style="font-size:16px;">${p.date}</strong>
+            <small style="font-size:13px; color:var(--text-soft); display:block;">${p.type}</small>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${p.status === 'Pendiente' 
+              ? `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`
+              : `<span class="badge ${p.cls}">${p.status}</span>`
+            }
+            <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()" style="padding:6px 12px; font-size:12px;">🖨️ Imprimir</button>
+            <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()" style="padding:6px 12px; font-size:12px;">📄 Descargar PDF</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ============================================================
+  // RENDER: MIS TURNOS
+  // ============================================================
+  function statusHTML(turno) {
+    if (turno.status === 'Pendiente') {
+      return `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`;
+    }
+    return `<span class="badge ${turno.cls}">${turno.status}</span>`;
+  }
+
+  function renderMisTurnos() {
+    const container = document.getElementById('turnosContainer');
+    if (!container) return;
+
+    if (turnosFuturos.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:30px 20px; background:var(--green-soft); border-radius:12px; border:1px dashed var(--border);">
+          <div style="font-size:40px; margin-bottom:10px;">📭</div>
+          <p style="font-size:16px; font-weight:600; color:var(--text);">No tenés turnos pendientes</p>
+          <p style="font-size:13px; color:var(--text-soft);">Podés solicitar uno nuevo desde el botón "Nuevo turno"</p>
+        </div>
+      `;
+    } else {
+      const primero = turnosFuturos[0];
+      
+      let html = `
+        <div class="turno-destacado">
+          <div class="turno-destacado-top">
+            <div class="appt-time">${primero.time}</div>
+            <div class="appt-info">
+              <strong>${primero.date}</strong>
+              <small>${primero.type}</small>
+            </div>
+            ${primero.status === 'Pendiente' 
+              ? `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`
+              : `<span class="badge-destacado">${primero.status}</span>`
+            }
+          </div>
+          <div class="turno-actions-row">
+            <button type="button" class="btn btn-outline" onclick="modificarTurno(0)" style="padding:6px 12px; font-size:12px;">✏️ Modificar / Trasladar</button>
+            <button type="button" class="btn btn-danger" onclick="cancelarTurno(0)" style="padding:6px 12px; font-size:12px;">🚫 Cancelar turno</button>
+            <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()" style="padding:6px 12px; font-size:12px;">🖨 Imprimir</button>
+            <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()" style="padding:6px 12px; font-size:12px;">📄 Descargar PDF</button>
+          </div>
+        </div>
+      `;
+
+      const siguientes = turnosFuturos.slice(1);
+
+      if (siguientes.length > 0) {
+        html += siguientes.map((a, idx) => `
+          <div class="appt-item" style="flex-wrap:wrap;">
+            <div class="appt-time">${a.time}</div>
+            <div class="appt-info"><strong>${a.date}</strong><small>${a.type}</small></div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              ${statusHTML(a)}
+              <button type="button" class="btn btn-outline" onclick="modificarTurno(${idx + 1})" style="padding:4px 8px; font-size:11px;">✏️ Trasladar</button>
+              <button type="button" class="btn btn-danger" onclick="cancelarTurno(${idx + 1})" style="padding:4px 8px; font-size:11px;">🚫 Cancelar</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      container.innerHTML = html;
+    }
+
+    renderHistorialTurnos();
+  }
+
+  function renderHistorialTurnos() {
+    const antBox = document.getElementById('anterioresTurnosBox');
+    if (!antBox) return;
+
+    const total = turnosAnteriores.length;
+    const totalPaginas = Math.ceil(total / historialPageSize) || 1;
+
+    if (historialPaginaActual > totalPaginas) {
+      historialPaginaActual = totalPaginas;
+    }
+
+    const inicio = (historialPaginaActual - 1) * historialPageSize;
+    const fin = inicio + historialPageSize;
+    const pagina = turnosAnteriores.slice(inicio, fin);
+
+    if (pagina.length === 0) {
+      antBox.innerHTML = `<p class="empty-msg">No hay turnos anteriores.</p>`;
+    } else {
+      antBox.innerHTML = pagina.map(a => `
+        <div class="appt-item">
+          <div class="appt-time">${a.time}</div>
+          <div class="appt-info"><strong>${a.date}</strong><small>${a.type}</small></div>
+          <span class="badge ${a.cls}">${a.status}</span>
+        </div>
+      `).join('');
+    }
+
+    const paginacion = document.getElementById('historialPaginacion');
+    const info = document.getElementById('historialInfoPaginacion');
+    const numPagina = document.getElementById('historialNumPagina');
+    const btnPrev = document.getElementById('btnHistorialPrev');
+    const btnNext = document.getElementById('btnHistorialNext');
+
+    if (paginacion) {
+      paginacion.style.display = total > 0 ? 'flex' : 'none';
+    }
+
+    if (info) {
+      info.textContent = total === 0
+        ? '0 turnos'
+        : `Mostrando ${inicio + 1} - ${Math.min(fin, total)} de ${total} turnos`;
+    }
+
+    if (numPagina) {
+      numPagina.textContent = `Página ${historialPaginaActual} de ${totalPaginas}`;
+    }
+
+    if (btnPrev) {
+      btnPrev.disabled = historialPaginaActual <= 1;
+    }
+
+    if (btnNext) {
+      btnNext.disabled = historialPaginaActual >= totalPaginas;
+    }
+  }
+
+  function cambiarPageSizeHistorial() {
+    const select = document.getElementById('historialPageSize');
+    historialPageSize = parseInt(select.value, 10) || 10;
+    historialPaginaActual = 1;
+    renderHistorialTurnos();
+  }
+
+  function cambiarPaginaHistorial(dir) {
+    const totalPaginas = Math.ceil(turnosAnteriores.length / historialPageSize) || 1;
+    historialPaginaActual = Math.max(1, Math.min(totalPaginas, historialPaginaActual + dir));
+    renderHistorialTurnos();
+  }
+
+  // ============================================================
+  // RENDER: CONFIRMAR TURNO
+  // ============================================================
+  function renderConfirmarTurno() {
+    const box = document.getElementById('confirmTurnoBox');
+    if (!box) return;
+
+    if (turnosFuturos.length === 0) {
+      box.innerHTML = `<p class="empty-msg">No tenés turnos próximos para confirmar.</p>`;
+      return;
+    }
+
+    const t = turnosFuturos[0];
+    box.innerHTML = `
+      <div style="background:var(--green-light); border:2px solid var(--green); border-radius:16px; padding:22px 20px;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div class="appt-time" style="background:var(--green); color:white; font-size:18px; padding:12px 16px; min-width:80px; border-radius:10px; font-weight:700; text-align:center;">${t.time}</div>
+          <div class="appt-info">
+            <strong style="font-size:17px;">${t.date}</strong>
+            <small style="color:var(--text-soft); font-size:13px; display:block;">${t.type}</small>
+          </div>
+          <span class="badge ${t.cls}">${t.status}</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:18px;">
+          <button type="button" class="btn btn-primary" onclick="confirmarAsistenciaBackend()">✓ Confirmar asistencia</button>
+          <button type="button" class="btn btn-outline" onclick="modificarTurno(0)">✏ Modificar / Trasladar</button>
+          <button type="button" class="btn btn-danger" onclick="cancelarTurno(0)">🚫 Cancelar turno</button>
+          <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()">🖨️ Imprimir comprobante</button>
+          <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()">📄 Descargar PDF</button>
+        </div>
+      </div>`;
+  }
+
+  // ============================================================
+  // CONFIRMAR ASISTENCIA (LÓGICA CON RESTRICCIÓN DE 48 HORAS)
+  // ============================================================
+  function confirmarAsistenciaBackend() {
+    if (turnosFuturos.length === 0) return;
+
+    const turno = turnosFuturos[0];
+    const ahora = new Date();
+
+    let fechaTurnoStr = turno.iso || turno.date;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(fechaTurnoStr)) {
+      const partes = fechaTurnoStr.split('/');
+      fechaTurnoStr = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    const horaTurnoStr = turno.time24 || turno.time || '00:00';
+    const fechaHoraTurno = new Date(`${fechaTurnoStr}T${horaTurnoStr}:00`);
+
+    const diferenciaMs = fechaHoraTurno - ahora;
+    const horasFaltantes = diferenciaMs / (1000 * 60 * 60);
+
+    if (horasFaltantes > 48) {
+      const diasAproximados = Math.floor(horasFaltantes / 24);
+      alert(`⚠️ Aún no podés confirmar la asistencia.\n\nFaltan aproximadamente ${diasAproximados} días para tu turno. La asistencia solo se puede confirmar dentro de las 48 horas previas al mismo.`);
+      showToast('La confirmación se habilita 48 hs antes del turno.');
+      return;
+    }
+
+    turno.status = 'Confirmado';
+    turno.cls = 'confirmed';
+
+    const statusOk = document.getElementById('statusOk');
+    if (statusOk) statusOk.classList.add('show');
+
+    showToast('¡Asistencia confirmada con éxito!');
+    renderMisTurnos();
+    renderConfirmarTurno();
+    renderProximoTurnoAbajo();
+  }
+
+  // ============================================================
+  // CALENDARIO Y VALIDACIÓN DE HORARIOS OCUPADOS
+  // ============================================================
+  let calMonth = new Date().getMonth();
+  let calYear = new Date().getFullYear();
+  let selectedDate = null;
+  let selectedTime = null;
+  const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30'];
+
+  // Obtiene los horarios ocupados reales consultando los turnos activos en el servidor
+  function getBusySlots(dateStr) {
+    if (!todosLosTurnosGlobales) return [];
+
+    let dateFormatted = dateStr;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const p = dateStr.split('-');
+      dateFormatted = `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    return todosLosTurnosGlobales
+      .filter(t => (t.fecha === dateStr || t.fecha === dateFormatted) && t.estado !== 'Cancelado')
+      .map(t => t.hora);
+  }
+
+  function isAvailableDay(y, m, d) {
+    const dt = new Date(y, m, d);
+    const wd = dt.getDay();
+    if (wd !== 2 && wd !== 4) return false;
+    const today = new Date(); today.setHours(0,0,0,0);
+    return dt >= today;
+  }
+
+  function renderCalendar() {
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('calTitle').textContent = monthNames[calMonth] + ' ' + calYear;
+    const first = new Date(calYear, calMonth, 1);
+    const last = new Date(calYear, calMonth + 1, 0);
+    let startWd = first.getDay() - 1; if (startWd < 0) startWd = 6;
+    let html = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => `<div class="wd">${d}</div>`).join('');
+    for (let i = 0; i < startWd; i++) html += `<div class="cal-day empty"></div>`;
+    for (let day = 1; day <= last.getDate(); day++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const available = isAvailableDay(calYear, calMonth, day);
+      let cls = 'cal-day' + (available ? ' available' : '') + (selectedDate === dateStr ? ' selected' : '');
+      html += available
+        ? `<div class="${cls}" onclick="selectDay('${dateStr}',${day})">${day}</div>`
+        : `<div class="${cls}">${day}</div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    else if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function selectDay(dateStr, day) {
+    selectedDate = dateStr; selectedTime = null;
+    document.getElementById('fechaElegida').value = dateStr;
+    document.getElementById('horaElegida').value = '';
+    renderCalendar();
+    renderSlots(dateStr, day);
+    updateSummary();
+  }
+
+  function renderSlots(dateStr, day) {
+    document.getElementById('slotsBox').style.display = 'block';
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    document.getElementById('slotsTitle').textContent = `Horarios disponibles · ${day} de ${monthNames[calMonth]}`;
+    
+    const busy = getBusySlots(dateStr);
+
+    document.getElementById('slotsGrid').innerHTML = ALL_SLOTS.map(t => {
+      const taken = busy.includes(t);
+      return `<button type="button" class="slot-btn${selectedTime===t?' selected':''}" ${taken?'disabled':''} onclick="selectSlot('${t}')">${t}</button>`;
+    }).join('');
+  }
+
+  function selectSlot(time) {
+    selectedTime = time;
+    document.getElementById('horaElegida').value = time;
+    renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const el = document.getElementById('selectedSummary');
+    if (selectedDate && selectedTime) {
+      const [y,m,d] = selectedDate.split('-');
+      el.textContent = `Turno seleccionado: ${d}/${m}/${y} a las ${selectedTime} hs`;
+      el.classList.add('show');
+    } else el.classList.remove('show');
+  }
+
+  // ============================================================
+  // ENVIAR SOLICITUD DE TURNO
+  // ============================================================
+  async function enviarSolicitud(e) {
+    e.preventDefault();
+    if (!datosConfirmados) {
+      showToast('Primero confirmá tus datos personales');
+      return;
+    }
+
+    const fecha = document.getElementById('fechaElegida').value;
+    const hora = document.getElementById('horaElegida').value;
+    const motivo = document.getElementById('motivo').value;
+
+    if (!fecha || !hora) {
+      showToast('Seleccioná un día y horario en el calendario');
+      return;
+    }
+
+    try {
+      const respuesta = await fetch('/api/turnos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paciente: paciente.nombre,
+          profesional: 'Dra. María González',
+          fecha: fecha,
+          hora: hora,
+          motivo: motivo
+        })
+      });
+
+      const resData = await respuesta.json();
+
+      if (respuesta.ok && resData.ok !== false) {
+        showToast('¡Turno registrado con éxito!');
+        limpiarFormulario();
+        await cargarTurnosDesdeBackend();
+        mostrarSeccion('mis-turnos');
+      } else {
+        alert('⚠️ ' + (resData.mensaje || 'El horario seleccionado ya no está disponible.'));
+        await cargarTurnosDesdeBackend();
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      showToast('No se pudo conectar con el backend');
+    }
+  }
+
+  function limpiarFormulario() {
+    document.getElementById('formNuevoTurno').reset();
+    selectedDate = null; selectedTime = null;
+    document.getElementById('slotsBox').style.display = 'none';
+    document.getElementById('selectedSummary').classList.remove('show');
+    actualizarVistaDatos();
+    renderCalendar();
+  }
+
+  // ============================================================
+  // TOAST / NOTIFICACIONES
+  // ============================================================
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ============================================================
+  // INICIALIZACIÓN
+  // ============================================================
+  cargarTurnosDesdeBackend();
+  renderCalendar();
+</script>
+
+</body>
+</html>

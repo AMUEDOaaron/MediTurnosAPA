@@ -1,0 +1,20 @@
+<script>
+  const loginForm = document.querySelector('.login-form');
+  
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault(); // Frena la redirección automática del formulario
+    
+    // Capturamos lo que escribiste en los inputs
+    const inputs = loginForm.querySelectorAll('input');
+    const usuario = inputs[0].value;
+    const password = inputs[1].value;
+    
+    // Validación de prueba
+    if (usuario === 'admin' && password === '1234') {
+      alert('¡Acceso autorizado, Alejandro!');
+      window.location.href = 'admin-dashboard.html';
+    } else {
+      alert('Credenciales incorrectas. Probá ingresando "admin" y "1234".');
+    }
+  });
+</script>

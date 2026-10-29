@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Portal del Paciente</title>
+
+<!-- Librería para generación de PDF en el navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root {
+    --green: #1a7a4c;
+    --green-dark: #145c3a;
+    --green-light: #e8f5ee;
+    --green-mid: #d1e7dd;
+    --green-soft: #f0faf4;
+    --text: #1a2e22;
+    --text-soft: #5a6b60;
+    --border: #b7d4c4;
+    --white: #ffffff;
+    --danger: #dc2626;
+    --radius: 14px;
+    --shadow: 0 4px 16px rgba(26, 122, 76, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--green-soft);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  .header {
+    background: var(--green);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-left img {
+    height: 42px; background: white; border-radius: 10px; padding: 4px 8px;
+  }
+  .header-left .fallback-logo {
+    height: 42px; width: 42px; background: white; color: var(--green);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px;
+  }
+  .header-title { font-size: 15px; font-weight: 600; }
+  .header-title small { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; }
+  .patient-chip {
+    background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .patient-chip span {
+    width: 28px; height: 28px; background: white; color: var(--green);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .patient-chip #chipNombre { width: auto; height: auto; background: transparent; color: inherit; border-radius: 0; }
+
+  .app { display: flex; min-height: calc(100vh - 66px); }
+
+  .sidebar {
+    width: 230px;
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 66px;
+    height: calc(100vh - 66px);
+    overflow-y: auto;
+  }
+  .sidebar .menu-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-soft); padding: 0 20px 10px;
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none;
+    border-left: 3px solid transparent; transition: all 0.15s; cursor: pointer;
+  }
+  .side-item:hover { background: var(--green-light); color: var(--green-dark); }
+  .side-item.active {
+    background: var(--green-light); color: var(--green);
+    border-left-color: var(--green); font-weight: 600;
+  }
+  .side-item .icon { font-size: 18px; width: 24px; text-align: center; }
+  .logout-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    font-size: 14px; font-weight: 600; color: var(--danger); text-decoration: none;
+    border-left: 3px solid transparent; margin-top: auto; cursor: pointer; transition: all 0.15s;
+  }
+  .logout-item:hover { background: #fef2f2; border-left-color: var(--danger); }
+  .logout-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .main { flex: 1; padding: 24px 28px 40px; max-width: 960px; }
+
+  .breadcrumb { font-size: 14px; color: var(--text-soft); margin-bottom: 18px; }
+  .breadcrumb strong { color: var(--green); }
+
+  /* ===== BOTONES GRANDES ===== */
+  .action-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px;
+  }
+  .action-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 16px; text-align: left; cursor: pointer; transition: all 0.2s;
+    box-shadow: var(--shadow); text-decoration: none; color: inherit;
+  }
+  .action-card:hover {
+    border-color: var(--green); transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26, 122, 76, 0.12);
+  }
+  .action-card .icon { font-size: 26px; margin-bottom: 8px; }
+  .action-card strong { display: block; font-size: 15px; color: var(--green); margin-bottom: 4px; }
+  .action-card p { font-size: 12px; color: var(--text-soft); line-height: 1.4; }
+
+  /* ===== SECCIONES ===== */
+  .seccion {
+    display: none;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .seccion.activa {
+    display: block;
+  }
+
+  .seccion-header { margin-bottom: 14px; }
+  .seccion-header h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .seccion-header p { font-size: 14px; color: var(--text-soft); }
+
+  /* ===== CARD GENERAL ===== */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card-header { margin-bottom: 14px; }
+  .card-header h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .card-header p { font-size: 14px; color: var(--text-soft); }
+
+  .contact-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;
+  }
+  .contact-card {
+    background: var(--green-light); border-radius: 12px; padding: 14px; text-align: center;
+  }
+  .contact-card .icon { font-size: 22px; margin-bottom: 4px; }
+  .contact-card strong { display: block; font-size: 13px; margin-bottom: 2px; }
+  .contact-card a { color: var(--green-dark); font-size: 12px; text-decoration: none; font-weight: 600; }
+  .contact-card a:hover { text-decoration: underline; }
+
+  .info-box {
+    background: var(--green-light); border-left: 4px solid var(--green);
+    border-radius: 0 10px 10px 0; padding: 11px 14px; font-size: 13px;
+    color: var(--text-soft); margin-top: 14px;
+  }
+  .info-box.warning {
+    background: #fffbeb;
+    border-left-color: #d97706;
+  }
+
+  /* ===== ESTILOS PARA TURNOS ===== */
+  .section-label {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--green); margin: 16px 0 8px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  .appt-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--green-mid);
+  }
+  .appt-item:last-child { border-bottom: none; }
+  .appt-time {
+    background: var(--green-light); color: var(--green-dark); font-weight: 700;
+    font-size: 13px; padding: 8px 11px; border-radius: 10px; min-width: 58px; text-align: center;
+  }
+  .appt-info { flex: 1; }
+  .appt-info strong { display: block; font-size: 14px; }
+  .appt-info small { color: var(--text-soft); font-size: 12px; }
+
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+  }
+  .badge.confirmed { background: #d1fae5; color: #065f46; }
+  .badge.pending { background: #fef3c7; color: #92400e; }
+  .badge.attended { background: #e0f2fe; color: #0369a1; }
+  .badge.cancelled { background: #fee2e2; color: #991b1b; }
+
+  .btn-por-confirmar {
+    font-size: 11px; font-weight: 700;
+    padding: 5px 12px; border-radius: 20px;
+    background: #fef3c7; color: #92400e;
+    border: 1.5px solid #fbbf24;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-por-confirmar:hover { background: #fde68a; border-color: #f59e0b; }
+
+  .empty-msg { color: var(--text-soft); font-size: 14px; padding: 10px 0; }
+
+  /* ===== ESTILOS PARA FORMULARIOS ===== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { margin-bottom: 4px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .form-group label .req { color: var(--danger); }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; background: #fafffe; color: var(--text);
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--green); background: white;
+  }
+  .form-group input[readonly] { background: #f1f5f4; color: var(--text-soft); }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-hint { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .form-actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+  .btn-danger { background: white; border: 1.5px solid var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: #fef2f2; }
+
+  /* ===== CALENDARIO ===== */
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;
+  }
+  .cal-grid .wd {
+    font-size: 11px; font-weight: 700; color: var(--text-soft); padding: 4px 0; text-transform: uppercase;
+  }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid transparent;
+    background: #f1f5f4; color: #94a3b8;
+  }
+  .cal-day.empty { background: transparent; border: none; }
+  .cal-day.available { background: var(--green-light); color: var(--green-dark); border-color: #86efac; cursor: pointer; }
+  .cal-day.available:hover { background: #bbf7d0; }
+  .cal-day.selected { background: var(--green); color: white; border-color: var(--green); }
+
+  .slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot-btn {
+    padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer;
+  }
+  .slot-btn:hover:not(:disabled) { border-color: var(--green); background: var(--green-light); }
+  .slot-btn.selected { background: var(--green); border-color: var(--green); color: white; }
+  .slot-btn:disabled { background: #f1f5f4; color: #94a3b8; cursor: not-allowed; text-decoration: line-through; }
+
+  .selected-summary {
+    margin-top: 12px; padding: 10px 14px; background: var(--green-light);
+    border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--green-dark); display: none;
+  }
+  .selected-summary.show { display: block; }
+
+  .status-ok {
+    background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 12px;
+    padding: 16px; text-align: center; color: #065f46; font-weight: 600; display: none;
+  }
+  .status-ok.show { display: block; }
+
+  .datos-turno-box {
+    background: var(--green-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .datos-turno-box .datos-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    margin-bottom: 14px;
+  }
+  .datos-turno-box .dato-item { font-size: 13px; }
+  .datos-turno-box .dato-item span {
+    display: block; font-size: 11px; font-weight: 600; color: var(--text-soft);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px;
+  }
+  .datos-turno-box .dato-item strong { font-size: 14px; color: var(--text); }
+  .datos-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .datos-ok-badge {
+    display: none; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: #065f46;
+    background: #d1fae5; padding: 6px 12px; border-radius: 8px;
+  }
+  .datos-ok-badge.show { display: inline-flex; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green-dark); color: white; padding: 12px 22px;
+    border-radius: 12px; font-size: 14px; font-weight: 600; opacity: 0;
+    transition: all 0.3s; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== TURNO DESTACADO ===== */
+  .turno-destacado {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 3px solid var(--green);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(26, 122, 76, 0.2);
+  }
+  .turno-destacado .appt-time {
+    background: var(--green);
+    color: white;
+    font-size: 16px;
+    padding: 12px 16px;
+    min-width: 75px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .turno-destacado .appt-info strong {
+    font-size: 17px;
+    color: var(--green-dark);
+  }
+  .turno-destacado .appt-info small {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+  .badge-destacado {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--green);
+    color: white;
+  }
+
+  /* ===== ESTILOS PARA IMPRESIÓN ===== */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #comprobanteTurnoArea, #comprobanteTurnoArea * {
+      visibility: visible;
+    }
+    #comprobanteTurnoArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      padding: 30px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #000;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .app { flex-direction: column; }
+    .sidebar {
+      position: relative; top: 0; height: auto; width: 100%;
+      border-right: none; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; padding: 10px; gap: 4px;
+    }
+    .sidebar .menu-label { width: 100%; padding: 4px 10px; }
+    .side-item, .logout-item { border-left: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 0; }
+    .action-cards { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .datos-turno-box .datos-row { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+    .turno-destacado { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <img src="assets/Logo-MediTurnos.png" alt="Medi-Turnos"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+    <div class="fallback-logo" style="display:none">MT</div>
+    <div class="header-title">
+      Medi-Turnos
+      <small>Portal del Paciente</small>
+    </div>
+  </div>
+  <div class="patient-chip">
+    <span>JP</span>
+    <span id="chipNombre">Juan Pérez</span>
+  </div>
+</header>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="menu-label">Menú</div>
+    <a class="side-item active" href="#" onclick="mostrarSeccion('inicio'); return false;">
+      <span class="icon">🏠</span> Inicio
+    </a>
+    <a class="side-item" href="#" onclick="mostrarSeccion('mis-turnos'); return false;">
+      <span class="icon">📅</span> Turnos
+    </a>
+    <a class="side-item" href="#" onclick="mostrarSeccion('datos'); return false;">
+      <span class="icon">👤</span> Datos personales
+    </a>
+    <a class="logout-item" href="pacientes-login.html" onclick="return confirm('¿Querés cerrar la sesión?');">
+      <span class="icon">↪</span> Cerrar sesión
+    </a>
+  </aside>
+
+  <main class="main">
+    <div class="breadcrumb">Inicio &gt; <strong id="tituloSeccion">Portal del paciente</strong></div>
+
+    <!-- ===== BOTONES GRANDES ===== -->
+    <div class="action-cards">
+      <div class="action-card" onclick="mostrarSeccion('nuevo-turno')">
+        <div class="icon">➕</div>
+        <strong>Nuevo turno</strong>
+        <p>Reservá el turno que más te convenga.</p>
+      </div>
+
+      <div class="action-card" onclick="mostrarSeccion('mis-turnos')">
+        <div class="icon">📋</div>
+        <strong>Mis turnos</strong>
+        <p>Visualizá los turnos que tenés reservados.</p>
+      </div>
+
+      <div class="action-card" onclick="mostrarSeccion('confirmar-turno')">
+        <div class="icon">✅</div>
+        <strong>Confirmar turno</strong>
+        <p>Confirmá tu asistencia al próximo turno.</p>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: INICIO ===== -->
+    <div id="seccion-inicio" class="seccion activa">
+      <div class="seccion-header">
+        <h3>👋 Bienvenido al Portal del Paciente</h3>
+        <p>Desde acá podés administrar tus turnos de manera rápida y sencilla.</p>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: MIS TURNOS ===== -->
+    <div id="seccion-mis-turnos" class="seccion">
+      <div class="seccion-header">
+        <h3>Mis turnos</h3>
+      </div>
+
+      <div class="section-label">📅 Próximos turnos</div>
+      <div id="turnosContainer">
+        <p class="empty-msg">Cargando turnos...</p>
+      </div>
+
+      <div class="section-label">📜 Historial de turnos</div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; padding:12px 14px; background:var(--green-soft); border:1px solid var(--border); border-radius:10px;">
+        <div style="font-size:13px; color:var(--text-soft);">
+          Mostrando los turnos anteriores más recientes
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="historialPageSize" style="font-size:13px; font-weight:600;">Mostrar:</label>
+          <select id="historialPageSize" onchange="cambiarPageSizeHistorial()" style="padding:7px 10px; border:1.5px solid var(--border); border-radius:8px; background:white; color:var(--text); font-size:13px; font-weight:600; cursor:pointer;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="anterioresTurnosBox"><p class="empty-msg">No hay turnos anteriores.</p></div>
+
+      <div id="historialPaginacion" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--green-mid); align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <span id="historialInfoPaginacion" style="font-size:12px; color:var(--text-soft);"></span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn btn-outline" id="btnHistorialPrev" onclick="cambiarPaginaHistorial(-1)" style="padding:7px 12px; font-size:12px;">← Anterior</button>
+          <span id="historialNumPagina" style="font-size:12px; font-weight:600; color:var(--text-soft); min-width:100px; text-align:center;"></span>
+          <button type="button" class="btn btn-outline" id="btnHistorialNext" onclick="cambiarPaginaHistorial(1)" style="padding:7px 12px; font-size:12px;">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECCIÓN: CONFIRMAR TURNO ===== -->
+    <div id="seccion-confirmar-turno" class="seccion">
+      <div class="seccion-header">
+        <h3>Confirmar turno</h3>
+        <p>Indicá si vas a asistir a tu próximo turno</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:12px;">
+        Confirmá tu asistencia con anticipación. Así el consultorio organiza mejor la agenda 
+        y se evita que el turno quede libre sin avisar.
+      </div>
+
+      <div class="info-box warning" style="margin-top:0; margin-bottom:18px;">
+        <strong>Importante:</strong> Solo podés confirmar tu asistencia a partir de las 
+        <strong>48 horas previas</strong> al turno.
+      </div>
+
+      <div class="status-ok" id="statusOk">✓ Asistencia confirmada. ¡Te esperamos!</div>
+
+      <div id="confirmTurnoBox"><p class="empty-msg">Cargando turnos...</p></div>
+    </div>
+
+    <!-- ===== SECCIÓN: NUEVO TURNO ===== -->
+    <div id="seccion-nuevo-turno" class="seccion">
+      <div class="seccion-header">
+        <h3>Solicitar nuevo turno</h3>
+        <p>Elegí un día y horario disponible en la agenda de la profesional</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:18px;">
+        Solo se muestran los días en los que la Dra. González tiene turnos libres (martes y jueves).
+      </div>
+
+      <form id="formNuevoTurno" onsubmit="enviarSolicitud(event)">
+        <div class="section-label">Tus datos para este turno</div>
+        <div class="datos-turno-box">
+          <div class="datos-row" id="datosTurnoVista">
+            <div class="dato-item"><span>Nombre</span><strong id="vistaNombre">—</strong></div>
+            <div class="dato-item"><span>DNI</span><strong id="vistaDni">—</strong></div>
+            <div class="dato-item"><span>Teléfono</span><strong id="vistaTelefono">—</strong></div>
+            <div class="dato-item"><span>Obra social</span><strong id="vistaObra">—</strong></div>
+          </div>
+          <div class="datos-actions">
+            <button type="button" class="btn btn-primary" onclick="confirmarDatosOk()">Confirmar</button>
+            <button type="button" class="btn btn-outline" onclick="mostrarSeccion('datos')">Modificar datos</button>
+            <span class="datos-ok-badge" id="datosOkBadge">✓ Datos confirmados</span>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tipo de consulta <span class="req">*</span></label>
+            <select id="tipoConsulta" required>
+              <option value="">Seleccioná...</option>
+              <option>Control</option>
+              <option>Primera consulta</option>
+              <option>Seguimiento</option>
+              <option>Urgencia / Prioritario</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Motivo de la consulta <span class="req">*</span></label>
+            <input type="text" id="motivo" required placeholder="Ej: control de lunar...">
+          </div>
+        </div>
+
+        <div style="margin-top:14px; border:1px solid var(--border); border-radius:12px; padding:16px; background:#fafffe;">
+          <label style="font-weight:600; font-size:13px;">Elegí día y horario disponible <span style="color:var(--danger);">*</span></label>
+          <div style="margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-weight:700; font-size:15px;">
+              <button type="button" onclick="changeMonth(-1)" style="background:var(--green-light); border:1px solid var(--border); width:32px; height:32px; border-radius:8px; cursor:pointer; color:var(--green); font-size:16px;">‹</button>
+              <span id="calTitle">Mes Año</span>
+              <button type="button" onclick="changeMonth(1)" style="background:var(--green-light); border:1px solid var(--border); width:32px; height:32px; border-radius:8px; cursor:pointer; color:var(--green); font-size:16px;">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div style="display:flex; gap:14px; margin-top:12px; font-size:12px; color:var(--text-soft); flex-wrap:wrap;">
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--green-light); border:1px solid #86efac;"></i> Con turnos libres</span>
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:#f1f5f4;"></i> Sin disponibilidad</span>
+              <span style="display:flex; align-items:center; gap:5px;"><i style="width:12px; height:12px; border-radius:3px; display:inline-block; background:var(--green);"></i> Seleccionado</span>
+            </div>
+            <div id="slotsBox" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--green-mid);">
+              <h4 id="slotsTitle" style="font-size:13px; font-weight:700; margin-bottom:10px;">Horarios disponibles</h4>
+              <div class="slots-grid" id="slotsGrid"></div>
+            </div>
+            <div class="selected-summary" id="selectedSummary"></div>
+          </div>
+          <input type="hidden" id="fechaElegida">
+          <input type="hidden" id="horaElegida">
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>Observaciones (opcional)</label>
+          <textarea id="observaciones" placeholder="Ej: traigo estudios previos..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Enviar solicitud de turno</button>
+          <button type="button" class="btn btn-outline" onclick="limpiarFormulario()">Limpiar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== SECCIÓN: DATOS PERSONALES ===== -->
+    <div id="seccion-datos" class="seccion">
+      <div class="seccion-header">
+        <h3>Datos personales</h3>
+        <p>Actualizá tu información de contacto y cobertura</p>
+      </div>
+
+      <div class="info-box" style="margin-top:0; margin-bottom:18px;">
+        Estos datos se usan al solicitar un turno. El <strong>nombre</strong> y el <strong>DNI</strong> 
+        no se pueden modificar desde aquí (si necesitás corregirlos, contactá al consultorio).
+      </div>
+
+      <form id="formDatos" onsubmit="guardarDatos(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="datoNombre" value="Juan Pérez" readonly>
+          </div>
+          <div class="form-group">
+            <label>DNI</label>
+            <input type="text" id="datoDni" value="32.456.789" readonly>
+          </div>
+          <div class="form-group">
+            <label>Teléfono de contacto <span class="req">*</span></label>
+            <input type="tel" id="datoTelefono" value="11 5555-1234" required>
+            <div class="form-hint">Para confirmar turnos o avisarte cambios</div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="datoEmail" value="juan.perez@email.com" placeholder="tu@email.com">
+          </div>
+          <div class="form-group">
+            <label>Obra social / Cobertura <span class="req">*</span></label>
+            <select id="datoObra" required>
+              <option value="">Seleccioná...</option>
+              <option>Particular</option>
+              <option selected>OSDE</option>
+              <option>Swiss Medical</option>
+              <option>Galeno</option>
+              <option>Medicus</option>
+              <option>Otra</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Nº de afiliado (opcional)</label>
+            <input type="text" id="datoAfiliado" placeholder="Ej: 123456789">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Guardar datos</button>
+          <button type="button" class="btn btn-outline" onclick="mostrarSeccion('inicio')">Volver al inicio</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== PRÓXIMO TURNO MÁS CERCANO (ABAJO) ===== -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 Próximo turno</h3>
+        <p>Tu turno más cercano</p>
+      </div>
+      <div id="proximoTurnoAbajo">
+        <p class="empty-msg">Cargando turnos...</p>
+      </div>
+    </div>
+
+    <!-- ===== CONTACTOS DEL CONSULTORIO (ABAJO) ===== -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📞 Contactos del consultorio</h3>
+        <p>Canales de comunicación disponibles</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="icon">📞</div>
+          <strong>Teléfono</strong>
+          <a href="tel:+541145678900">11 4567-8900</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">💬</div>
+          <strong>WhatsApp</strong>
+          <a href="https://wa.me/5491145678900" target="_blank">Enviar mensaje</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">✉️</div>
+          <strong>Email</strong>
+          <a href="mailto:turnos@mediturnos.com">turnos@mediturnos.com</a>
+        </div>
+        <div class="contact-card">
+          <div class="icon">📍</div>
+          <strong>Dirección</strong>
+          <a href="#">Av. Santa Fe 1234, CABA</a>
+        </div>
+      </div>
+      <div class="info-box">
+        <strong>Horario de atención telefónica:</strong> Lunes a viernes de 9:00 a 18:00 hs.<br>
+        Para cancelaciones o cambios, avisá con al menos 24 horas de anticipación.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // DATOS DEL PACIENTE
+  // ============================================================
+  let paciente = {
+    nombre: 'Juan Pérez',
+    dni: '32.456.789',
+    telefono: '11 5555-1234',
+    email: 'juan.perez@email.com',
+    obra: 'OSDE',
+    afiliado: ''
+  };
+
+  let datosConfirmados = false;
+  let turnosFuturos = [];
+
+  let turnosAnteriores = [
+    { date: '20/08/2026', time: '11:00', type: 'Control dermatológico', status: 'Atendido', cls: 'attended' },
+    { date: '05/08/2026', time: '09:30', type: 'Primera consulta', status: 'Atendido', cls: 'attended' }
+  ];
+
+  // ============================================================
+  // PAGINACIÓN DEL HISTORIAL DE TURNOS
+  // ============================================================
+  let historialPaginaActual = 1;
+  let historialPageSize = 10;
+
+  // ============================================================
+  // MOSTRAR/OCULTAR SECCIONES
+  // ============================================================
+  function mostrarSeccion(id) {
+    document.querySelectorAll('.seccion').forEach(el => {
+      el.classList.remove('activa');
+    });
+
+    const seccion = document.getElementById('seccion-' + id);
+    if (seccion) {
+      seccion.classList.add('activa');
+    }
+
+    const titulos = {
+      'inicio': 'Portal del paciente',
+      'mis-turnos': 'Mis turnos',
+      'confirmar-turno': 'Confirmar turno',
+      'nuevo-turno': 'Nuevo turno',
+      'datos': 'Datos personales'
+    };
+    document.getElementById('tituloSeccion').textContent = titulos[id] || 'Portal del paciente';
+
+    document.querySelectorAll('.side-item').forEach(el => el.classList.remove('active'));
+    const map = {
+      'inicio': 0,
+      'mis-turnos': 1,
+      'datos': 2
+    };
+    const idx = map[id];
+    if (idx !== undefined) {
+      const items = document.querySelectorAll('.side-item');
+      if (items[idx]) items[idx].classList.add('active');
+    }
+
+    if (id === 'mis-turnos' || id === 'confirmar-turno') {
+      cargarTurnosDesdeBackend();
+    }
+
+    window.scrollTo({ top: 200, behavior: 'smooth' });
+  }
+
+  // ============================================================
+  // GENERAR VISTA DEL COMPROBANTE
+  // ============================================================
+  function generarElementoComprobante() {
+    if (turnosFuturos.length === 0) return null;
+
+    const turno = turnosFuturos[0];
+
+    let printArea = document.getElementById('comprobanteTurnoArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'comprobanteTurnoArea';
+      document.body.appendChild(printArea);
+    }
+
+    printArea.innerHTML = `
+      <div style="text-align: center; border-bottom: 2px solid #1a7a4c; padding-bottom: 12px; margin-bottom: 20px;">
+        <h1 style="color: #1a7a4c; margin: 0; font-size: 24px;">Medi-Turnos</h1>
+        <p style="font-size: 14px; color: #555; margin-top: 4px;">Comprobante Oficial de Turno Médico</p>
+      </div>
+      
+      <div style="background: #f0faf4; border: 1px solid #b7d4c4; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="color: #1a7a4c; margin-top: 0; font-size: 16px; border-bottom: 1px solid #b7d4c4; padding-bottom: 6px;">Datos del Paciente</h3>
+        <p style="margin: 6px 0;"><strong>Nombre completo:</strong> ${paciente.nombre}</p>
+        <p style="margin: 6px 0;"><strong>DNI:</strong> ${paciente.dni}</p>
+        <p style="margin: 6px 0;"><strong>Teléfono:</strong> ${paciente.telefono}</p>
+        <p style="margin: 6px 0;"><strong>Obra Social:</strong> ${paciente.obra}</p>
+      </div>
+
+      <div style="border: 2px solid #1a7a4c; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="color: #1a7a4c; margin-top: 0; font-size: 16px; border-bottom: 1px solid #1a7a4c; padding-bottom: 6px;">Detalles de la Cita</h3>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Fecha del turno:</strong> ${turno.date}</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Horario:</strong> ${turno.time} hs</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Especialidad / Consulta:</strong> ${turno.type}</p>
+        <p style="margin: 8px 0; font-size: 15px;"><strong>Estado actual:</strong> <span style="text-transform: uppercase; font-weight: bold;">${turno.status}</span></p>
+      </div>
+
+      <div style="margin-top: 30px; border-top: 1px dashed #aaa; padding-top: 12px; font-size: 12px; color: #666; text-align: center;">
+        <p style="margin: 4px 0;"><strong>Centro Médico Medi-Turnos</strong> — Av. Santa Fe 1234, CABA</p>
+        <p style="margin: 4px 0;">Atención al paciente: 11 4567-8900 | turnos@mediturnos.com</p>
+        <p style="margin: 8px 0 0; font-style: italic;">Por favor presentate con DNI y carnet de obra social 10 minutos antes de tu turno.</p>
+      </div>
+    `;
+
+    return printArea;
+  }
+
+  // ============================================================
+  // IMPRIMIR COMPROBANTE DE TURNO
+  // ============================================================
+  function imprimirComprobanteTurno() {
+    const area = generarElementoComprobante();
+    if (!area) {
+      showToast('No hay ningún turno próximo para imprimir');
+      return;
+    }
+    window.print();
+  }
+
+  // ============================================================
+  // DESCARGAR COMPROBANTE EN PDF
+  // ============================================================
+  function descargarPDFTurno() {
+    const element = generarElementoComprobante();
+    if (!element) {
+      showToast('No hay ningún turno próximo para descargar');
+      return;
+    }
+
+    showToast('Generando archivo PDF...');
+
+    const opt = {
+      margin:       10,
+      filename:     `Comprobante_Turno_${paciente.nombre.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // ============================================================
+  // CARGAR TURNOS DESDE BACKEND
+  // ============================================================
+  async function cargarTurnosDesdeBackend() {
+    try {
+      const respuesta = await fetch('http://localhost:3000/api/turnos');
+      const data = await respuesta.json();
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      function convertirFechaTurno(fecha, hora) {
+        if (!fecha) return new Date('invalid');
+        const horaSegura = hora || '00:00';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+          return new Date(fecha + 'T' + horaSegura);
+        }
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+          const partes = fecha.split('/');
+          return new Date(`${partes[2]}-${partes[1]}-${partes[0]}T${horaSegura}`);
+        }
+        return new Date(fecha + 'T' + horaSegura);
+      }
+
+      const turnosBackend = data.map(t => {
+        const fechaTurno = convertirFechaTurno(t.fecha, t.hora);
+        const esPasado = !Number.isNaN(fechaTurno.getTime()) && fechaTurno < hoy;
+        const estado = t.estado || (esPasado ? 'Atendido' : 'Pendiente');
+
+        return {
+          date: t.fecha,
+          time: t.hora,
+          type: 'Control dermatológico (' + t.profesional + ')',
+          status: estado,
+          cls: estado === 'Confirmado' ? 'confirmed' : (estado === 'Atendido' ? 'attended' : (estado === 'Cancelado' ? 'cancelled' : 'pending')),
+          iso: t.fecha,
+          time24: t.hora,
+          esPasado: esPasado
+        };
+      });
+
+      const turnosPasadosBackend = turnosBackend.filter(t => t.esPasado);
+      const turnosFuturosBackend = turnosBackend.filter(t => !t.esPasado);
+
+      if (turnosPasadosBackend.length > 0) {
+        turnosAnteriores = turnosPasadosBackend.map(t => ({
+          date: t.date,
+          time: t.time,
+          type: t.type,
+          status: t.status,
+          cls: t.cls
+        }));
+      }
+
+      turnosAnteriores.sort((a, b) => {
+        const fechaA = convertirFechaTurno(a.date, a.time);
+        const fechaB = convertirFechaTurno(b.date, b.time);
+        return fechaB - fechaA;
+      });
+
+      turnosFuturos = turnosFuturosBackend.sort((a, b) => {
+        const fechaA = new Date(a.iso + 'T' + (a.time24 || '00:00'));
+        const fechaB = new Date(b.iso + 'T' + (b.time24 || '00:00'));
+        return fechaA - fechaB;
+      });
+
+      historialPaginaActual = 1;
+      renderMisTurnos();
+      renderConfirmarTurno();
+      renderProximoTurnoAbajo();
+    } catch (error) {
+      console.error('Error al cargar turnos del servidor:', error);
+      showToast('No se pudieron sincronizar los turnos con el servidor');
+    }
+  }
+
+  // ============================================================
+  // RENDER: PRÓXIMO TURNO (ABAJO)
+  // ============================================================
+  function renderProximoTurnoAbajo() {
+    const box = document.getElementById('proximoTurnoAbajo');
+    if (!box) return;
+
+    if (turnosFuturos.length === 0) {
+      box.innerHTML = `<p class="empty-msg">No tenés turnos próximos.</p>`;
+    } else {
+      const p = turnosFuturos[0];
+      box.innerHTML = `
+        <div style="background:linear-gradient(135deg,#e8f5ee 0%,#d1fae5 100%); border:2px solid var(--green); border-radius:14px; padding:16px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; position:relative;">
+          <div style="background:var(--green); color:white; font-size:15px; padding:10px 14px; min-width:70px; border-radius:10px; font-weight:700; text-align:center;">${p.time}</div>
+          <div style="flex:1;">
+            <strong style="font-size:16px;">${p.date}</strong>
+            <small style="font-size:13px; color:var(--text-soft); display:block;">${p.type}</small>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            ${p.status === 'Pendiente' 
+              ? `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`
+              : `<span class="badge ${p.cls}">${p.status}</span>`
+            }
+            <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()" style="padding:6px 12px; font-size:12px;">🖨️ Imprimir</button>
+            <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()" style="padding:6px 12px; font-size:12px;">📄 Descargar PDF</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ============================================================
+  // RENDER: MIS TURNOS
+  // ============================================================
+  function statusHTML(turno) {
+    if (turno.status === 'Pendiente') {
+      return `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`;
+    }
+    return `<span class="badge ${turno.cls}">${turno.status}</span>`;
+  }
+
+  function renderMisTurnos() {
+    const container = document.getElementById('turnosContainer');
+    if (!container) return;
+
+    if (turnosFuturos.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:30px 20px; background:var(--green-soft); border-radius:12px; border:1px dashed var(--border);">
+          <div style="font-size:40px; margin-bottom:10px;">📭</div>
+          <p style="font-size:16px; font-weight:600; color:var(--text);">No tenés turnos pendientes</p>
+          <p style="font-size:13px; color:var(--text-soft);">Podés solicitar uno nuevo desde el botón "Nuevo turno"</p>
+        </div>
+      `;
+    } else {
+      const primero = turnosFuturos[0];
+      let html = `
+        <div class="turno-destacado">
+          <div class="appt-time">${primero.time}</div>
+          <div class="appt-info">
+            <strong>${primero.date}</strong>
+            <small>${primero.type}</small>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${primero.status === 'Pendiente' 
+              ? `<button type="button" class="btn-por-confirmar" onclick="mostrarSeccion('confirmar-turno')">Por confirmar</button>`
+              : `<span class="badge-destacado">${primero.status}</span>`
+            }
+            <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()" style="padding:6px 12px; font-size:12px; background:white;">🖨️ Imprimir</button>
+            <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()" style="padding:6px 12px; font-size:12px; background:white;">📄 Descargar PDF</button>
+          </div>
+        </div>
+      `;
+
+      const siguientes = turnosFuturos.slice(1, 4);
+
+      if (siguientes.length > 0) {
+        html += siguientes.map(a => `
+          <div class="appt-item">
+            <div class="appt-time">${a.time}</div>
+            <div class="appt-info"><strong>${a.date}</strong><small>${a.type}</small></div>
+            ${statusHTML(a)}
+          </div>
+        `).join('');
+      }
+
+      container.innerHTML = html;
+    }
+
+    renderHistorialTurnos();
+  }
+
+  function renderHistorialTurnos() {
+    const antBox = document.getElementById('anterioresTurnosBox');
+    if (!antBox) return;
+
+    const total = turnosAnteriores.length;
+    const totalPaginas = Math.ceil(total / historialPageSize) || 1;
+
+    if (historialPaginaActual > totalPaginas) {
+      historialPaginaActual = totalPaginas;
+    }
+
+    const inicio = (historialPaginaActual - 1) * historialPageSize;
+    const fin = inicio + historialPageSize;
+    const pagina = turnosAnteriores.slice(inicio, fin);
+
+    if (pagina.length === 0) {
+      antBox.innerHTML = `<p class="empty-msg">No hay turnos anteriores.</p>`;
+    } else {
+      antBox.innerHTML = pagina.map(a => `
+        <div class="appt-item">
+          <div class="appt-time">${a.time}</div>
+          <div class="appt-info"><strong>${a.date}</strong><small>${a.type}</small></div>
+          <span class="badge ${a.cls}">${a.status}</span>
+        </div>
+      `).join('');
+    }
+
+    const paginacion = document.getElementById('historialPaginacion');
+    const info = document.getElementById('historialInfoPaginacion');
+    const numPagina = document.getElementById('historialNumPagina');
+    const btnPrev = document.getElementById('btnHistorialPrev');
+    const btnNext = document.getElementById('btnHistorialNext');
+
+    if (paginacion) {
+      paginacion.style.display = total > 0 ? 'flex' : 'none';
+    }
+
+    if (info) {
+      info.textContent = total === 0
+        ? '0 turnos'
+        : `Mostrando ${inicio + 1} - ${Math.min(fin, total)} de ${total} turnos`;
+    }
+
+    if (numPagina) {
+      numPagina.textContent = `Página ${historialPaginaActual} de ${totalPaginas}`;
+    }
+
+    if (btnPrev) {
+      btnPrev.disabled = historialPaginaActual <= 1;
+    }
+
+    if (btnNext) {
+      btnNext.disabled = historialPaginaActual >= totalPaginas;
+    }
+  }
+
+  function cambiarPageSizeHistorial() {
+    const select = document.getElementById('historialPageSize');
+    historialPageSize = parseInt(select.value, 10) || 10;
+    historialPaginaActual = 1;
+    renderHistorialTurnos();
+  }
+
+  function cambiarPaginaHistorial(dir) {
+    const totalPaginas = Math.ceil(turnosAnteriores.length / historialPageSize) || 1;
+    historialPaginaActual = Math.max(1, Math.min(totalPaginas, historialPaginaActual + dir));
+    renderHistorialTurnos();
+  }
+
+  // ============================================================
+  // RENDER: CONFIRMAR TURNO
+  // ============================================================
+  function renderConfirmarTurno() {
+    const box = document.getElementById('confirmTurnoBox');
+    if (!box) return;
+
+    if (turnosFuturos.length === 0) {
+      box.innerHTML = `<p class="empty-msg">No tenés turnos próximos para confirmar.</p>`;
+      return;
+    }
+
+    const t = turnosFuturos[0];
+    box.innerHTML = `
+      <div style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%); border:2px solid var(--green); border-radius:16px; padding:22px 20px;">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div class="appt-time" style="background:var(--green); color:white; font-size:18px; padding:12px 16px; min-width:80px; border-radius:10px; font-weight:700; text-align:center;">${t.time}</div>
+          <div class="appt-info">
+            <strong style="font-size:17px;">${t.date}</strong>
+            <small style="color:var(--text-soft); font-size:13px; display:block;">${t.type}</small>
+          </div>
+          <span class="badge ${t.cls}">${t.status}</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:18px;">
+          <button type="button" class="btn btn-primary" onclick="confirmarAsistenciaBackend()">✓ Confirmar asistencia</button>
+          <button type="button" class="btn btn-outline" onclick="imprimirComprobanteTurno()">🖨️ Imprimir comprobante</button>
+          <button type="button" class="btn btn-outline" onclick="descargarPDFTurno()">📄 Descargar PDF</button>
+        </div>
+      </div>`;
+  }
+
+  // ============================================================
+  // CONFIRMAR ASISTENCIA
+  // ============================================================
+  function confirmarAsistenciaBackend() {
+    if (turnosFuturos.length === 0) return;
+    turnosFuturos[0].status = 'Confirmado';
+    turnosFuturos[0].cls = 'confirmed';
+    document.getElementById('statusOk').classList.add('show');
+    showToast('¡Asistencia confirmada con éxito!');
+    renderMisTurnos();
+    renderConfirmarTurno();
+    renderProximoTurnoAbajo();
+  }
+
+  // ============================================================
+  // DATOS PERSONALES
+  // ============================================================
+  function actualizarVistaDatos() {
+    document.getElementById('vistaNombre').textContent = paciente.nombre;
+    document.getElementById('vistaDni').textContent = paciente.dni;
+    document.getElementById('vistaTelefono').textContent = paciente.telefono;
+    document.getElementById('vistaObra').textContent = paciente.obra;
+    document.getElementById('chipNombre').textContent = paciente.nombre;
+  }
+
+  function confirmarDatosOk() {
+    actualizarVistaDatos();
+    datosConfirmados = true;
+    document.getElementById('datosOkBadge').classList.add('show');
+    showToast('Datos confirmados. Ya podés solicitar el turno.');
+  }
+
+  function guardarDatos(e) {
+    e.preventDefault();
+    paciente.telefono = document.getElementById('datoTelefono').value.trim();
+    paciente.email = document.getElementById('datoEmail').value.trim();
+    paciente.obra = document.getElementById('datoObra').value;
+    actualizarVistaDatos();
+    datosConfirmados = false;
+    document.getElementById('datosOkBadge').classList.remove('show');
+    showToast('Datos guardados correctamente');
+  }
+
+  // ============================================================
+  // CALENDARIO
+  // ============================================================
+  let calMonth = new Date().getMonth();
+  let calYear = new Date().getFullYear();
+  let selectedDate = null;
+  let selectedTime = null;
+  const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30'];
+
+  function getBusySlots(dateStr) {
+    const n = parseInt(dateStr.split('-').join('').slice(-2), 10);
+    if (n % 3 === 0) return ['09:00','09:30','10:00','16:00'];
+    if (n % 3 === 1) return ['10:30','11:00','11:30','17:00'];
+    return ['09:30','12:00','16:30'];
+  }
+
+  function isAvailableDay(y, m, d) {
+    const dt = new Date(y, m, d);
+    const wd = dt.getDay();
+    if (wd !== 2 && wd !== 4) return false;
+    const today = new Date(); today.setHours(0,0,0,0);
+    return dt >= today;
+  }
+
+  function renderCalendar() {
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('calTitle').textContent = monthNames[calMonth] + ' ' + calYear;
+    const first = new Date(calYear, calMonth, 1);
+    const last = new Date(calYear, calMonth + 1, 0);
+    let startWd = first.getDay() - 1; if (startWd < 0) startWd = 6;
+    let html = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => `<div class="wd">${d}</div>`).join('');
+    for (let i = 0; i < startWd; i++) html += `<div class="cal-day empty"></div>`;
+    for (let day = 1; day <= last.getDate(); day++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const available = isAvailableDay(calYear, calMonth, day);
+      let cls = 'cal-day' + (available ? ' available' : '') + (selectedDate === dateStr ? ' selected' : '');
+      html += available
+        ? `<div class="${cls}" onclick="selectDay('${dateStr}',${day})">${day}</div>`
+        : `<div class="${cls}">${day}</div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    else if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function selectDay(dateStr, day) {
+    selectedDate = dateStr; selectedTime = null;
+    document.getElementById('fechaElegida').value = dateStr;
+    document.getElementById('horaElegida').value = '';
+    renderCalendar();
+    renderSlots(dateStr, day);
+    updateSummary();
+  }
+
+  function renderSlots(dateStr, day) {
+    document.getElementById('slotsBox').style.display = 'block';
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    document.getElementById('slotsTitle').textContent = `Horarios disponibles · ${day} de ${monthNames[calMonth]}`;
+    const busy = getBusySlots(dateStr);
+    document.getElementById('slotsGrid').innerHTML = ALL_SLOTS.map(t => {
+      const taken = busy.includes(t);
+      return `<button type="button" class="slot-btn${selectedTime===t?' selected':''}" ${taken?'disabled':''} onclick="selectSlot('${t}')">${t}</button>`;
+    }).join('');
+  }
+
+  function selectSlot(time) {
+    selectedTime = time;
+    document.getElementById('horaElegida').value = time;
+    renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const el = document.getElementById('selectedSummary');
+    if (selectedDate && selectedTime) {
+      const [y,m,d] = selectedDate.split('-');
+      el.textContent = `Turno seleccionado: ${d}/${m}/${y} a las ${selectedTime} hs`;
+      el.classList.add('show');
+    } else el.classList.remove('show');
+  }
+
+  // ============================================================
+  // ENVIAR SOLICITUD DE TURNO
+  // ============================================================
+  async function enviarSolicitud(e) {
+    e.preventDefault();
+    if (!datosConfirmados) {
+      showToast('Primero confirmá tus datos personales');
+      return;
+    }
+
+    const fecha = document.getElementById('fechaElegida').value;
+    const hora = document.getElementById('horaElegida').value;
+    const motivo = document.getElementById('motivo').value;
+
+    if (!fecha || !hora) {
+      showToast('Seleccioná un día y horario en el calendario');
+      return;
+    }
+
+    try {
+      const respuesta = await fetch('http://localhost:3000/api/turnos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paciente: paciente.nombre,
+          profesional: 'Dra. María González',
+          fecha: fecha,
+          hora: hora,
+          motivo: motivo
+        })
+      });
+
+      if (respuesta.ok) {
+        showToast('¡Turno solicitado y guardado en el servidor con éxito!');
+        limpiarFormulario();
+        cargarTurnosDesdeBackend();
+        mostrarSeccion('mis-turnos');
+      } else {
+        showToast('Error al registrar el turno en el servidor');
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      showToast('No se pudo conectar con el backend');
+    }
+  }
+
+  function limpiarFormulario() {
+    document.getElementById('formNuevoTurno').reset();
+    selectedDate = null; selectedTime = null;
+    document.getElementById('slotsBox').style.display = 'none';
+    document.getElementById('selectedSummary').classList.remove('show');
+    actualizarVistaDatos();
+    renderCalendar();
+  }
+
+  // ============================================================
+  // TOAST / NOTIFICACIONES
+  // ============================================================
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ============================================================
+  // INICIALIZACIÓN
+  // ============================================================
+  actualizarVistaDatos();
+  cargarTurnosDesdeBackend();
+  renderCalendar();
+</script>
+
+</body>
+</html>

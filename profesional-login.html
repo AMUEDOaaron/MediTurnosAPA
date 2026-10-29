@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medi-Turnos | Acceso Profesional</title>
+<link rel="icon" type="image/png" href="assets/Logo-MediTurnos.png">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(rgba(26, 90, 156, 0.8), rgba(19, 74, 124, 0.85)),
+                url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=1920') center/cover no-repeat fixed;
+    padding: 20px;
+  }
+  .auth-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    border: 1px solid #a8c5e0;
+  }
+  .auth-header {
+    background: #1a5a9c;
+    color: white;
+    padding: 28px 24px 20px;
+    text-align: center;
+  }
+  .auth-header .logo {
+    width: 56px; height: 56px;
+    background: white;
+    color: #1a5a9c;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  .auth-header h1 { font-size: 22px; font-weight: 800; }
+  .auth-header p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+  .auth-body { padding: 28px 24px; }
+  .input-group { margin-bottom: 16px; }
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a2a3a;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    letter-spacing: 0.4px;
+  }
+  .input-wrapper { position: relative; }
+  .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: #1a5a9c;
+  }
+  .input-wrapper input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    border: 1.5px solid #a8c5e0;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #f8fbff;
+    color: #1a2a3a;
+  }
+  .input-wrapper input:focus {
+    outline: none;
+    border-color: #1a5a9c;
+    background: #fff;
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: #1a5a9c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-submit:hover { background: #134a7c; }
+  .msg-box {
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 18px;
+    display: none;
+    line-height: 1.4;
+  }
+  .msg-box.error { 
+    background: #fef2f2; 
+    color: #dc2626; 
+    border: 2px solid #fca5a5; 
+    display: block !important; 
+  }
+  .msg-box.success { 
+    background: #dbeafe; 
+    color: #1e40af; 
+    border: 2px solid #93c5fd; 
+    display: block !important; 
+  }
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #1a5a9c;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .back-link:hover { text-decoration: underline; }
+  .forgot-link {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #1a5a9c;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .forgot-link:hover { text-decoration: underline; }
+  .btn-secondary {
+    width: 100%;
+    padding: 10px;
+    background: #e2e8f0;
+    color: #334155;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: #cbd5e1; }
+</style>
+</head>
+<body>
+<div class="auth-card">
+  <div class="auth-header">
+    <div class="logo">MT</div>
+    <h1>Medi-Turnos</h1>
+    <p>Área Profesional · Médicos</p>
+  </div>
+  <div class="auth-body">
+    <div id="msgAlert" class="msg-box"></div>
+
+    <!-- Formulario de Login -->
+    <form id="formLogin">
+      <div class="input-group">
+        <label>DNI</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🩺</span>
+          <input type="text" id="loginDni" placeholder="Ej: 30123456" required autocomplete="username">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+      <a href="#" id="btnForgot" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      <button type="submit" class="btn-submit">Ingresar al Consultorio</button>
+    </form>
+
+    <!-- Formulario de Recuperación -->
+    <form id="formRecover" style="display: none;">
+      <p style="font-size: 13px; color: #4b5563; margin-bottom: 14px; text-align: center;">
+        Ingresá tu DNI y tu Correo Electrónico para enviarte una clave provisoria (válida por 3 días).
+      </p>
+      <div class="input-group">
+        <label>DNI</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🩺</span>
+          <input type="text" id="recoverDni" placeholder="Ej: 30123456" required>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Correo Electrónico</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉️</span>
+          <input type="email" id="recoverEmail" placeholder="correo@ejemplo.com" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">Enviar Contraseña Provisoria</button>
+      <button type="button" id="btnCancelRecover" class="btn-secondary">Volver al Login</button>
+    </form>
+
+    <a href="index.html" class="back-link">← Volver al Menú Principal</a>
+  </div>
+</div>
+<script>
+const formLogin = document.getElementById('formLogin');
+  const formRecover = document.getElementById('formRecover');
+  const btnForgot = document.getElementById('btnForgot');
+  const btnCancelRecover = document.getElementById('btnCancelRecover');
+  const box = document.getElementById('msgAlert');
+
+  function ocultarAlerta() {
+    box.style.display = 'none';
+    box.className = 'msg-box';
+  }
+
+  // Alternar entre login y recuperación
+  btnForgot.addEventListener('click', function(e) {
+    e.preventDefault();
+    ocultarAlerta();
+    formLogin.style.display = 'none';
+    formRecover.style.display = 'block';
+  });
+
+  btnCancelRecover.addEventListener('click', function() {
+    ocultarAlerta();
+    formRecover.style.display = 'none';
+    formLogin.style.display = 'block';
+  });
+
+  // Login
+  formLogin.addEventListener('submit', function(e) {
+    e.preventDefault();
+    ocultarAlerta();
+
+    const dniIngresado = document.getElementById('loginDni').value.trim();
+    const passwordIngresado = document.getElementById('loginPass').value;
+
+    const listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+    const ahora = Date.now();
+
+    // Validar por contraseña normal o por contraseña provisoria válida
+    const idxUsuario = listaUsuarios.findIndex(u => String(u.dni) === dniIngresado);
+    let usuarioValido = null;
+    let esPasswordProvisorio = false;
+
+    if (idxUsuario !== -1) {
+      const u = listaUsuarios[idxUsuario];
+      if (u.password === passwordIngresado) {
+        usuarioValido = u;
+      } else if (u.tempPassword && u.tempPassword === passwordIngresado) {
+        if (u.tempPasswordExpires && ahora <= u.tempPasswordExpires) {
+          usuarioValido = u;
+          esPasswordProvisorio = true;
+        } else {
+          box.innerHTML = '❌ La contraseña provisoria ha expirado (duración: 3 días). Solicita una nueva.';
+          box.className = 'msg-box error';
+          return;
+        }
+      }
+    }
+
+    if (usuarioValido) {
+      // Solo permitimos roles de profesional / admin
+      const rol = (usuarioValido.rol || '').toLowerCase();
+      if (rol !== 'profesional' && rol !== 'admin') {
+        box.textContent = 'Este usuario no tiene permisos de Profesional.';
+        box.className = 'msg-box error';
+        return;
+      }
+
+      // Guardamos el usuario activo
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        ...usuarioValido,
+        rol: 'profesional',
+        debeCambiarPassword: esPasswordProvisorio
+      }));
+
+      box.textContent = esPasswordProvisorio ? '¡Ingreso correcto con clave provisoria! Redirigiendo...' : '¡Bienvenida/o! Redirigiendo...';
+      box.className = 'msg-box success';
+      setTimeout(() => window.location.href = 'profesionales.html', 700);
+      return;
+    }
+
+    // Usuario de emergencia (modo local)
+    if ((dniIngresado === 'doctora' || dniIngresado === 'profesional' || dniIngresado === 'maria') && passwordIngresado === '1234') {
+      localStorage.setItem('usuario_activo', JSON.stringify({
+        usuario: 'Dra. María González',
+        dni: dniIngresado,
+        rol: 'profesional',
+        especialidad: 'Dermatología',
+        matricula: 'MP 12345'
+      }));
+      box.textContent = '¡Bienvenida! (Modo Local)';
+      box.className = 'msg-box success';
+      setTimeout(() => window.location.href = 'profesionales.html', 700);
+      return;
+    }
+
+    // Credenciales incorrectas
+    box.innerHTML = '❌ DNI o contraseña incorrectos';
+    box.className = 'msg-box error';
+  });
+
+
+</script>
+</body>
+</html>

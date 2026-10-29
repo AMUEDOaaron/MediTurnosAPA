@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medi-Turnos | Gestión de Agenda</title>
+<link rel="icon" type="image/png" href="assets/Logo-MediTurnos.png">
+<style>
+:root {
+  --lila-primary: #c6bcdb;
+  --lila-dark: #746b8a;
+  --lila-light: #f3eef9;
+  --lila-mid: #e4d9f2;
+  --lila-soft: #faf7fd;
+  --border: #e8dff3;
+  --text: #29233b;
+  --text-soft: #625c6e;
+  --bg-main: #f7f4fb;
+}
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg-main);
+  color: var(--text);
+}
+
+/* SHELL Y MAIN */
+.app-shell { display: flex; height: 100vh; overflow: hidden; width: 100%; }
+.professional-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
+
+/* TOPBAR */
+.topbar-prof {
+  background-color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.eyebrow { font-size: 18px; font-weight: 700; color: var(--lila-primary); letter-spacing: 0.5px; text-transform: uppercase; }
+.quick-access { display: flex; gap: 8px; margin-left: auto; margin-right: 15px; flex-wrap: wrap; }
+.quick-access button {
+  background: var(--lila-light); border: 1px solid var(--lila-primary); color: var(--lila-dark);
+  font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 20px;
+  cursor: pointer; transition: all .2s; text-transform: uppercase;
+}
+.quick-access button:hover {
+  background: var(--lila-primary); color: #fff;
+}
+.doctor-box {
+  display: flex; align-items: center; gap: 10px; background: #fff;
+  padding: 6px 12px; border-radius: 12px; border: 1px solid var(--border);
+}
+.doctor-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--lila-light);
+  color: var(--lila-dark); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+}
+.doctor-box small { display: block; color: var(--text-soft); font-size: 11px; }
+
+/* CONTENEDOR AGENDA FLEXIBLE */
+.agenda-workspace {
+  flex: 1; padding: 20px 24px; overflow: hidden; display: flex; flex-direction: column;
+}
+.agenda-header-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; background: #fff; padding: 12px 20px; border-radius: 12px;
+  border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+.agenda-header-nav h2 { margin: 0; color: var(--lila-dark); font-size: 18px; }
+.btn-nav {
+  background: var(--lila-light); color: var(--lila-dark); border: 1px solid var(--lila-mid);
+  padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;
+}
+.btn-nav:hover { background: var(--lila-primary); color: #fff; }
+
+/* GRILLA SEMANAL */
+.week-view-wrapper {
+  flex: 1; display: flex; overflow-y: auto; background: #fff;
+  border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+.time-scale-col {
+  width: 60px; flex-shrink: 0; border-right: 1px solid #e2e8f0; background: #f8fafc;
+  position: relative;
+}
+
+.days-wrapper { display: flex; flex: 1; position: relative; }
+.day-column {
+  flex: 1; border-right: 1px solid #e2e8f0; position: relative;
+  transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+  display: flex; flex-direction: column;
+  min-width: 0; 
+}
+.day-column:last-child { border-right: none; }
+.day-column:hover { background-color: #f8fafc; }
+
+.day-column.today-col { flex: 1.2; background-color: var(--lila-soft); }
+.day-column.today-col .day-header { background: var(--lila-light); color: var(--lila-dark); border-bottom-color: var(--lila-mid); }
+.day-column.selected-col {
+  flex: 1.6; background-color: #ffffff; box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+  z-index: 10; border-left: 1px solid var(--lila-mid); border-right: 1px solid var(--lila-mid);
+}
+.day-column.selected-col .day-header { background: #fff; color: var(--lila-primary); }
+
+/* ESTILOS DE DÍAS BLOQUEADOS */
+.day-column.col-bloqueada { background-color: #e2e8f0 !important; }
+.day-column.col-bloqueada .day-header { background: #cbd5e1 !important; color: #334155 !important; border-bottom: 2px solid #94a3b8; }
+
+.day-header {
+  height: auto; padding: 10px 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-bottom: 1px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 13px;
+  position: sticky; top: 0; z-index: 20; color: var(--text-soft); transition: all 0.3s;
+}
+.day-header strong { font-size: 16px; color: var(--text); line-height: 1.2; }
+.day-header:hover { background: #e2e8f0; } 
+
+.day-body {
+  position: relative; flex: 1; cursor: pointer;
+}
+
+/* EVENTOS DENTRO DE LA AGENDA */
+.event-chip {
+  position: absolute; left: 4%; width: 92%; border-radius: 6px; padding: 6px;
+  font-size: 11px; overflow: hidden; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, z-index 0.2s; cursor: pointer; border-left: 4px solid var(--lila-primary);
+  background: var(--lila-light); color: var(--lila-dark); display: flex; flex-direction: column;
+  z-index: 5;
+}
+.event-chip:hover {
+  transform: scale(1.02); z-index: 30; box-shadow: 0 4px 8px rgba(0,0,0,0.15); border-color: var(--lila-dark);
+}
+.event-chip.chip-bloqueo { border-left-color: #1e293b; background: #475569; color: #ffffff; font-weight: bold; }
+.event-chip.chip-espera { border-left-color: #0284c7; background: #bae6fd; color: #0c4a6e; }
+.event-chip.chip-atendido { border-left-color: #059669; background: #d1fae5; color: #064e3b; }
+.event-chip-time { font-weight: 800; margin-bottom: 2px; }
+.event-chip-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ESTILOS DEL TIMELINE (MODAL DIARIO) */
+.timeline-container { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+.timeline-slot { display: flex; align-items: stretch; }
+.timeline-time { width: 60px; font-weight: bold; color: #555; padding-top: 10px; border-right: 2px solid #ddd; margin-right: 15px; text-align: right; padding-right: 10px;}
+.timeline-content { flex: 1; padding: 12px; border-radius: 6px; font-size: 14px; transition: 0.2s; }
+.timeline-content.free { background-color: #f1f5f9; border: 1px dashed #94a3b8; color: #475569; text-align: center; cursor: pointer; }
+.timeline-content.free:hover { background-color: #e2e8f0; }
+.timeline-content.occupied { background-color: var(--lila-light); border-left: 4px solid var(--lila-primary); color: var(--lila-dark); cursor: pointer; }
+.timeline-content.occupied:hover { background-color: var(--lila-mid); }
+
+/* MODALES */
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.5); display: none; justify-content: center;
+  align-items: center; z-index: 2000; padding: 20px; box-sizing: border-box;
+}
+.modal-backdrop.show { display: flex; }
+.modal {
+  background: #ffffff; border-radius: 12px; padding: 24px; width: 100%;
+  max-width: 550px; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25); position: relative; box-sizing: border-box;
+}
+.modal-close {
+  position: absolute; top: 15px; right: 20px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-soft); font-weight: 700;
+}
+
+/* BOTONES GLOBALES */
+.btn {
+  padding: 10px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-size: 14px; transition: 0.2s;
+}
+.btn-green { background: var(--lila-dark); color: #fff; border: 1px solid var(--lila-dark); }
+.btn-green:hover { background: var(--lila-primary); }
+.btn-cancel { background: #fee2e2; color: #991b1b; }
+.btn-cancel:hover { background: #fecaca; }
+.btn-modificar { background: #fef3c7; color: #92400e; }
+.btn-modificar:hover { background: #fde68a; }
+.full { width: 100%; }
+
+/* FORMULARIOS */
+label { display: block; font-size: 13px; font-weight: 700; color: var(--text-soft); margin-bottom: 5px; }
+input, select, textarea {
+  width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px;
+  font-family: inherit; font-size: 14px; box-sizing: border-box; margin-bottom: 12px;
+}
+
+.toast {
+  position: fixed; bottom: 20px; right: 20px; background: var(--lila-dark); color: #fff;
+  padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s ease; z-index: 9999;
+}
+.toast.show { opacity: 1; }
+/* --- MODO OSCURO AGENDA --- */
+body.dark-mode {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+html.dark-mode,
+body.dark-mode html {
+  background-color: #121212 !important;
+}
+
+/* Topbar */
+body.dark-mode .topbar-prof {
+  background-color: #1e1e1e !important;
+  border-bottom-color: #333 !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+}
+body.dark-mode .eyebrow { color: #c4b5fd !important; }
+body.dark-mode .quick-access button {
+  background: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode .quick-access button:hover {
+  background: #444 !important;
+  color: #fff !important;
+}
+body.dark-mode .doctor-box {
+  background: #2a2a2a !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+body.dark-mode .doctor-avatar {
+  background: #3b2f5a !important;
+  color: #e9d5ff !important;
+}
+body.dark-mode .doctor-box small { color: #a1a1aa !important; }
+
+/* Workspace y nav de semana */
+body.dark-mode .agenda-workspace {
+  background: #121212 !important;
+}
+body.dark-mode .agenda-header-nav {
+  background: #1e1e1e !important;
+  border-color: #333 !important;
+  box-shadow: none !important;
+}
+body.dark-mode .agenda-header-nav h2 { color: #e0e0e0 !important; }
+body.dark-mode .btn-nav {
+  background: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode .btn-nav:hover {
+  background: #5b4b8a !important;
+  color: #fff !important;
+}
+
+/* Contenedor de la grilla (el que scrollea) */
+body.dark-mode .week-view-wrapper {
+  background: #1a1a1a !important;
+  border-color: #333 !important;
+  box-shadow: none !important;
+}
+
+/* Columna de horas */
+body.dark-mode .time-scale-col {
+  background: #1a1a1a !important;
+  border-right-color: #333 !important;
+}
+body.dark-mode .time-scale-col > div {
+  background: #1a1a1a !important;
+  border-bottom-color: #333 !important;
+  color: #a1a1aa !important;
+}
+body.dark-mode .time-scale-col span {
+  color: #a1a1aa !important;
+}
+
+/* Columnas de días */
+body.dark-mode .days-wrapper {
+  background: #1a1a1a !important;
+}
+body.dark-mode .day-column {
+  background-color: #1a1a1a !important;
+  border-right-color: #333 !important;
+}
+body.dark-mode .day-column:hover {
+  background-color: #222 !important;
+}
+body.dark-mode .day-column.today-col {
+  background-color: #1e1b2e !important;
+}
+body.dark-mode .day-column.selected-col {
+  background-color: #252038 !important;
+  border-left-color: #7c6aa8 !important;
+  border-right-color: #7c6aa8 !important;
+  box-shadow: 0 0 15px rgba(124, 106, 168, 0.25) !important;
+}
+body.dark-mode .day-column.col-bloqueada {
+  background-color: #2a2a2a !important;
+}
+body.dark-mode .day-column.col-bloqueada .day-header {
+  background: #3f3f46 !important;
+  color: #d4d4d8 !important;
+  border-bottom-color: #52525b !important;
+}
+
+/* Headers de día (sticky) */
+body.dark-mode .day-header {
+  background: #1e1e1e !important;
+  border-bottom-color: #333 !important;
+  color: #a1a1aa !important;
+}
+body.dark-mode .day-header strong { color: #e0e0e0 !important; }
+body.dark-mode .day-header:hover { background: #2a2a2a !important; }
+body.dark-mode .day-column.today-col .day-header {
+  background: #2a2340 !important;
+  color: #e9d5ff !important;
+  border-bottom-color: #5b4b8a !important;
+}
+body.dark-mode .day-column.selected-col .day-header {
+  background: #2a2340 !important;
+  color: #c4b5fd !important;
+}
+
+/* Cuerpo del día + líneas de grilla generadas en JS */
+body.dark-mode .day-body {
+  background: #1a1a1a !important;
+}
+body.dark-mode .day-body .grid-lines-container,
+body.dark-mode .day-body .grid-lines-container > div {
+  border-bottom-color: #333 !important;
+  background: transparent !important;
+}
+
+/* Chips de eventos (se mantienen legibles) */
+body.dark-mode .event-chip {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Modales */
+body.dark-mode .modal {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+body.dark-mode .modal h2 { color: #c4b5fd !important; }
+body.dark-mode .modal-close { color: #a1a1aa !important; }
+body.dark-mode label { color: #a1a1aa !important; }
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode #verTurnoContent {
+  background: #2a2a2a !important;
+  border-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Timeline del modal día */
+body.dark-mode .timeline-time { color: #a1a1aa !important; border-right-color: #444 !important; }
+body.dark-mode .timeline-content.free {
+  background: #2a2a2a !important;
+  border-color: #555 !important;
+  color: #a1a1aa !important;
+}
+body.dark-mode .timeline-content.free:hover {
+  background: #333 !important;
+  color: #e0e0e0 !important;
+}
+body.dark-mode .timeline-content.occupied {
+  background: #2a2340 !important;
+  border-left-color: #c4b5fd !important;
+  color: #e9d5ff !important;
+}
+
+/* Forzar fondos claros residuales (inline styles del JS) */
+body.dark-mode div[style*="background:#f8fafc"],
+body.dark-mode div[style*="background: #f8fafc"],
+body.dark-mode div[style*="background:#fff"],
+body.dark-mode div[style*="background: #fff"],
+body.dark-mode div[style*="background:#ffffff"],
+body.dark-mode div[style*="background: #ffffff"],
+body.dark-mode div[style*="background:#faf7fd"],
+body.dark-mode div[style*="background: #faf7fd"] {
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
+}
+body.dark-mode div[style*="border-bottom:1px solid #e2e8f0"],
+body.dark-mode div[style*="border-bottom:1px solid #cbd5e1"],
+body.dark-mode div[style*="border-bottom:1px dashed #e2e8f0"] {
+  border-bottom-color: #333 !important;
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <main class="professional-main">
+    
+    <header class="topbar-prof">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <img src="assets/Logo-MediTurnos.png" alt="Medi-Turnos" style="height: 40px;" onerror="this.src='https://via.placeholder.com/150x50?text=Medi-Turnos'">
+        <div class="eyebrow">GESTIÓN DE AGENDA</div>
+      </div>
+      
+<!-- BOTONES DINÁMICOS CON IDS PARA CONTROLAR ORIGEN -->
+      <div class="quick-access">
+        <button id="btnVolverProf" style="display: none;" onclick="window.location.href='profecionales.html'">← VOLVER A PROFESIONAL</button>
+        <button id="btnVolverAdmin" style="display: none;" onclick="window.location.href='secretaria.html'">← VOLVER A ADMINISTRACIÓN</button>
+      <button id="btnModoOscuro" onclick="toggleDarkMode()" style="font-size: 1.2rem; padding: 5px 10px;" title="Alternar Modo Oscuro">🌙</button>
+      </div>
+      
+      <div class="doctor-box">
+        <div class="doctor-avatar">SC</div>
+        <div><strong>Secretaría</strong><small>Administración · Consultorio</small></div>
+      </div>
+    </header>
+
+    <div class="agenda-workspace">
+      <div class="agenda-header-nav">
+        <button class="btn-nav" onclick="cambiarSemana(-1)">← Semana Anterior</button>
+        <h2 id="rangoSemanaLabel">Cargando semana...</h2>
+        <button class="btn-nav" onclick="cambiarSemana(1)">Semana Siguiente →</button>
+      </div>
+
+      <div class="week-view-wrapper">
+        <div class="time-scale-col" id="timeScaleContainer"></div>
+        <div class="days-wrapper" id="daysWrapper"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: AGENDA DETALLADA DEL DÍA (NUEVO) -->
+<div class="modal-backdrop" id="modalDiaCalendario">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal('modalDiaCalendario')">×</button>
+    <h2 id="tituloModalDia" style="color:var(--lila-dark); margin-top:0;">Agenda del Día</h2>
+    <p style="color:var(--text-soft); font-size:13px; margin-bottom:15px;">Vista detallada para este día específico.</p>
+    <button id="btnBloquearDia" class="btn full"></button>
+    <div id="contenidoModalDia">
+        <!-- Aquí se inyecta la línea de tiempo (timeline) -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE DEL TURNO (PARA VER, CANCELAR O EDITAR) -->
+<div class="modal-backdrop" id="modalVer">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal('modalVer')">×</button>
+    <h2 style="color:var(--lila-dark); margin-top:0;">Detalle del Evento</h2>
+    <div id="verTurnoContent" style="font-size:14px; line-height:1.7; margin-bottom: 20px; background:var(--lila-soft); padding:15px; border-radius:8px; border:1px solid var(--border);"></div>
+    
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn btn-cancel" id="btnCancelarTurno">✕ Cancelar</button>
+      <button class="btn btn-modificar" id="btnEditarTurno">✏️ Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CREAR / EDITAR TURNO -->
+<div class="modal-backdrop" id="modalTurno">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal('modalTurno')">×</button>
+    <h2 id="modalTitleMain" style="color:var(--lila-dark); margin-top:0;">Nuevo evento o turno</h2>
+    <p id="modalDescMain" style="color:var(--text-soft); font-size:13px; margin-bottom:15px;">Registrá turnos médicos o eventos en la agenda.</p>
+    
+    <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom: 12px;">
+      <div>
+        <label>Tipo de Evento *</label>
+        <select id="newTipoEvento" onchange="cambiarTipoEventoForm()">
+          <option value="Consulta">Consulta Médica (Turno de paciente)</option>
+          <option value="Congreso">Congreso</option>
+          <option value="Cita importante">Cita importante</option>
+          <option value="Tarea personal">Tarea personal</option>
+          <option value="Otro">Bloqueo / Otro</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="eventoFieldsContainer" style="display:none;">
+      <div>
+        <label>Descripción / Título *</label>
+        <input type="text" id="newMotivo" placeholder="Ej: Control general / Motivo del evento">
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; background:var(--lila-soft); padding:12px; border-radius:8px; border:1px solid var(--border);">
+      <div>
+        <label style="color:var(--lila-dark);">Fecha *</label>
+        <input type="date" id="newFecha" style="border-color:var(--lila-mid);">
+      </div>
+      <div>
+        <label style="color:var(--lila-dark);">Hora Inicio *</label>
+        <input type="time" id="newHoraDesde" onchange="actualizarFinAutomatico()" style="border-color:var(--lila-mid);">
+      </div>
+      <div>
+        <label style="color:var(--lila-dark);">Hora Fin *</label>
+        <input type="time" id="newHoraHasta" style="border-color:var(--lila-mid);">
+      </div>
+    </div>
+
+    <button id="btnSubmitForm" class="btn full" style="margin-top:20px;" onclick="guardarTurnoAgenda()"></button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let fullBackendData = {};
+  let listaTurnosGeneral = [];
+  
+  let fechaSemanaActual = new Date();
+  
+  const HORA_INICIO = 6; 
+  const HORA_FIN = 22; 
+  let idTurnoModificar = null;
+
+  // NUEVA FUNCIÓN: Configura qué botón de retorno mostrar según la URL (?origen=admin o ?origen=prof)
+  function configurarBotonesRetorno() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const origen = urlParams.get('origen');
+
+    const btnAdmin = document.getElementById('btnVolverAdmin');
+    const btnProf = document.getElementById('btnVolverProf');
+
+    if (origen === 'admin') {
+      if (btnAdmin) btnAdmin.style.display = 'inline-block';
+      if (btnProf) btnProf.style.display = 'none';
+    } else if (origen === 'prof') {
+      if (btnProf) btnProf.style.display = 'inline-block';
+      if (btnAdmin) btnAdmin.style.display = 'none';
+    } else {
+      // Por defecto si entra sin parámetro, muestra ambos
+      if (btnAdmin) btnAdmin.style.display = 'inline-block';
+      if (btnProf) btnProf.style.display = 'inline-block';
+    }
+  }
+
+  async function cargarDatosServidor() {
+    try {
+      const response = await fetch('http://localhost:3000/api/datos');
+      fullBackendData = await response.json();
+      listaTurnosGeneral = fullBackendData.turnos || [];
+
+      renderizarEscalaTiempo();
+      renderizarSemana();
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      showToast("Error de conexión (Modo offline)");
+      renderizarEscalaTiempo();
+      renderizarSemana();
+    }
+  }
+
+  async function guardarDatosServidor() {
+    try {
+      fullBackendData.turnos = listaTurnosGeneral;
+      await fetch('http://localhost:3000/api/datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullBackendData)
+      });
+    } catch (error) {
+      console.error("Error al guardar:", error);
+    }
+  }
+
+  function obtenerLunes(d) {
+    d = new Date(d);
+    var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+    return new Date(d.setDate(diff));
+  }
+
+  function cambiarSemana(direccion) {
+    fechaSemanaActual.setDate(fechaSemanaActual.getDate() + (direccion * 7));
+    renderizarSemana();
+  }
+
+    function renderizarEscalaTiempo() {
+    const container = document.getElementById('timeScaleContainer');
+    const isDark = document.body.classList.contains('dark-mode');
+    const bg = isDark ? '#1a1a1a' : '#f8fafc';
+    const border = isDark ? '#333' : '#e2e8f0';
+    const borderStrong = isDark ? '#333' : '#cbd5e1';
+    const colorH = isDark ? '#a1a1aa' : '#64748b';
+    const colorM = isDark ? '#71717a' : '#94a3b8';
+
+    let html = `<div style="height:50px; border-bottom:1px solid ${border}; position:sticky; top:0; background:${bg}; z-index:20;"></div>`;
+    
+    for (let h = HORA_INICIO; h <= HORA_FIN; h++) {
+      html += `
+        <div style="height:60px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; border-bottom:1px solid ${borderStrong}; box-sizing:border-box; padding:4px 0; background:${bg};">
+          <span style="font-size:12px; font-weight:700; color:${colorH};">${String(h).padStart(2, '0')}:00</span>
+          <span style="font-size:10px; font-weight:600; color:${colorM};">${String(h).padStart(2, '0')}:30</span>
+        </div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  function timeToMins(t) {
+    if (!t) return 0;
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+  function minsToTime(mins) {
+    let h = Math.floor(mins / 60);
+    let m = mins % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  window.clickEnColumna = function(event, dateStr, elementBody) {
+    const isBlocked = listaTurnosGeneral.some(t => t.fecha === dateStr && t.motivo === 'Día Bloqueado' && t.estado !== 'Cancelado');
+    if (isBlocked) {
+        showToast('🚫 El día está bloqueado. No se pueden agendar eventos.');
+        return;
+    }
+
+    document.querySelectorAll('.day-column').forEach(col => col.classList.remove('selected-col'));
+    elementBody.parentElement.classList.add('selected-col');
+
+    const rect = elementBody.getBoundingClientRect();
+    const clickY = event.clientY - rect.top;
+    
+    if (clickY < 0) return;
+
+    let totalMins = Math.floor(clickY) + (HORA_INICIO * 60);
+    let redondeoMins = Math.floor(totalMins / 30) * 30;
+    
+    let horaInicio = minsToTime(redondeoMins);
+    let horaFin = minsToTime(redondeoMins + 30); 
+
+    abrirModalTurnoForm(dateStr, horaInicio, horaFin);
+  }
+
+  function renderizarSemana() {
+    const lunes = obtenerLunes(fechaSemanaActual);
+    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+    const wrapper = document.getElementById('daysWrapper');
+    let htmlDias = '';
+    const hoyStrLocal = new Date().toISOString().split('T')[0];
+    
+    let domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    document.getElementById('rangoSemanaLabel').textContent = 
+      `${lunes.getDate()} de ${meses[lunes.getMonth()]} - ${domingo.getDate()} de ${meses[domingo.getMonth()]} ${lunes.getFullYear()}`;
+
+    const isDark = document.body.classList.contains('dark-mode');
+    const lineDash = isDark ? '#333' : '#e2e8f0';
+    const lineSolid = isDark ? '#333' : '#cbd5e1';
+    let lineasFondo = `<div class="grid-lines-container" style="width:100%; pointer-events:none;">`;
+    for (let h = HORA_INICIO; h <= HORA_FIN; h++) {
+      lineasFondo += `<div style="height:30px; border-bottom:1px dashed ${lineDash}; box-sizing:border-box;"></div>`;
+      lineasFondo += `<div style="height:30px; border-bottom:1px solid ${lineSolid}; box-sizing:border-box;"></div>`;
+    }
+    lineasFondo += `</div>`;
+
+    for (let i = 0; i < 7; i++) {
+      let fechaDia = new Date(lunes);
+      fechaDia.setDate(lunes.getDate() + i);
+      
+      let dateStr = `${fechaDia.getFullYear()}-${String(fechaDia.getMonth() + 1).padStart(2, '0')}-${String(fechaDia.getDate()).padStart(2, '0')}`;
+      let colClass = (dateStr === hoyStrLocal) ? 'day-column today-col' : 'day-column';
+      let colId = `dia_col_${i}`;
+
+      const isBlocked = listaTurnosGeneral.some(t => t.fecha === dateStr && t.motivo === 'Día Bloqueado' && t.estado !== 'Cancelado');
+      if (isBlocked) colClass += ' col-bloqueada';
+
+      let btnBloqueoRapido = '';
+      if (isBlocked) {
+          btnBloqueoRapido = `<button onclick="event.stopPropagation(); desbloquearDiaCompleto('${dateStr}')" style="margin-top:6px; padding:4px 8px; font-size:10px; font-weight:bold; background:#059669; color:white; border:none; border-radius:4px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);" title="Desbloquear Día">✅ DESBLOQUEAR</button>`;
+      } else {
+          btnBloqueoRapido = `<button onclick="event.stopPropagation(); bloquearDiaCompleto('${dateStr}')" style="margin-top:6px; padding:4px 8px; font-size:10px; font-weight:bold; background:#6d28d9; color:white; border:none; border-radius:4px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);" title="Bloquear Día Completo">🚫 BLOQUEAR</button>`;
+      }
+
+      let eventosDiaHTML = '';
+      const turnosDelDia = listaTurnosGeneral.filter(t => t.fecha === dateStr && t.estado !== 'Cancelado');
+
+      turnosDelDia.forEach(t => {
+        const startMins = timeToMins(t.hora);
+        const endMins = timeToMins(t.horaHasta) || (startMins + 30);
+        
+        if (endMins <= HORA_INICIO * 60 || startMins >= (HORA_FIN + 1) * 60) return;
+
+        let topPx = Math.max(0, startMins - (HORA_INICIO * 60));
+        let heightPx = endMins - Math.max(startMins, HORA_INICIO * 60);
+
+        let chipClass = 'event-chip';
+        if (t.motivo === 'Día Bloqueado' || t.tipoEvento === 'Otro') chipClass += ' chip-bloqueo';
+        else if (t.estado === 'En sala de espera') chipClass += ' chip-espera';
+        else if (t.estado === 'Atendido' || t.estado === 'Finalizado') chipClass += ' chip-atendido';
+
+        let tipo = t.tipoEvento || 'Consulta';
+        let titulo = t.paciente || t.motivo;
+        let descripcion = (t.motivo && t.motivo !== titulo && t.motivo !== 'Día Bloqueado') ? t.motivo : '';
+        if (t.motivo === 'Día Bloqueado') { titulo = '🚫 DÍA BLOQUEADO'; descripcion = 'No se pueden asignar turnos.'; }
+
+        eventosDiaHTML += `
+          <div class="${chipClass}" style="top: ${topPx}px; height: ${heightPx}px;" 
+                onclick="event.stopPropagation(); abrirDetalleTurno(${t.id})">
+             <div class="event-chip-time">${t.hora} - ${t.horaHasta}</div>
+             <div class="event-chip-title">${titulo}</div>
+             ${descripcion ? `<div style="font-size: 9px; opacity: 0.85; margin-top: 2px; overflow: hidden;">${descripcion}</div>` : ''}
+          </div>
+        `;
+      });
+
+      htmlDias += `
+        <div class="${colClass}" id="${colId}">
+          <div class="day-header" onclick="event.stopPropagation(); abrirModalDiaCalendario('${dateStr}')" style="cursor:pointer; height:auto; padding: 10px 0;" title="Click para ver agenda detallada del día">
+            <span>${diasSemana[i]}</span>
+            <strong>${String(fechaDia.getDate()).padStart(2, '0')} ${meses[fechaDia.getMonth()]}</strong>
+            ${btnBloqueoRapido}
+          </div>
+          <div class="day-body" onclick="clickEnColumna(event, '${dateStr}', this)">
+            ${lineasFondo}
+            ${eventosDiaHTML}
+          </div>
+        </div>
+      `;
+    }
+    wrapper.innerHTML = htmlDias;
+  }
+
+  function abrirModalDiaCalendario(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    document.getElementById('tituloModalDia').textContent = `Agenda del ${d}/${m}/${y}`;
+    
+    const diaBloqueado = listaTurnosGeneral.some(t => t.fecha === dateStr && t.motivo === 'Día Bloqueado' && t.estado !== 'Cancelado');
+    const btnBloquear = document.getElementById('btnBloquearDia');
+    
+    if (btnBloquear) {
+      if (diaBloqueado) {
+        btnBloquear.textContent = '✅ Desbloquear Día Completo';
+        btnBloquear.className = 'btn full';
+        btnBloquear.style.background = '#059669';
+        btnBloquear.style.color = '#fff';
+        btnBloquear.style.border = 'none';
+        btnBloquear.onclick = async () => { await desbloquearDiaCompleto(dateStr); abrirModalDiaCalendario(dateStr); };
+      } else {
+        btnBloquear.textContent = '🚫 Bloquear Día Completo';
+        btnBloquear.className = 'btn btn-cancel full';
+        btnBloquear.style.background = '#fee2e2';
+        btnBloquear.style.color = '#991b1b';
+        btnBloquear.style.border = 'none';
+        btnBloquear.onclick = async () => { await bloquearDiaCompleto(dateStr); abrirModalDiaCalendario(dateStr); };
+      }
+    }
+
+    renderizarAgendaDia(dateStr);
+    document.getElementById('modalDiaCalendario').classList.add('show');
+  }
+
+  function renderizarAgendaDia(dateStr) {
+    const diaBloqueado = listaTurnosGeneral.some(t => t.fecha === dateStr && t.motivo === 'Día Bloqueado' && t.estado !== 'Cancelado');
+    
+    if (diaBloqueado) {
+        document.getElementById('contenidoModalDia').innerHTML = '<div style="padding: 30px; text-align: center; color: #ffffff; font-weight: bold; background: #475569; border-radius: 8px; border: 1px solid #1e293b; margin-top: 15px;">🚫 Este día se encuentra bloqueado por completo. No se pueden agendar turnos ni eventos.</div>';
+        return;
+    }
+
+    const turnosDelDia = listaTurnosGeneral.filter(t => t.fecha === dateStr && t.estado !== 'Cancelado' && t.motivo !== 'Día Bloqueado');
+    let html = '<div class="timeline-container">';
+
+    let currentH = HORA_INICIO;
+    let currentM = 0;
+    const endH = HORA_FIN;
+    const endM = 0;
+    let generatedSlots = [];
+
+    while (currentH < endH || (currentH === endH && currentM <= 30)) {
+        let timeStr = String(currentH).padStart(2,'0') + ':' + String(currentM).padStart(2,'0');
+        generatedSlots.push(timeStr);
+        currentM += 30; 
+        if (currentM >= 60) {
+            currentH += Math.floor(currentM / 60);
+            currentM = currentM % 60;
+        }
+    }
+
+    turnosDelDia.forEach(t => {
+        if (!generatedSlots.includes(t.hora) && timeToMins(t.hora) >= HORA_INICIO * 60 && timeToMins(t.hora) <= (HORA_FIN + 1) * 60) {
+            generatedSlots.push(t.hora);
+        }
+    });
+
+    generatedSlots.sort((a, b) => timeToMins(a) - timeToMins(b));
+    generatedSlots = [...new Set(generatedSlots)];
+
+    generatedSlots.forEach(s => {
+      const turnosEnHora = turnosDelDia.filter(t => t.hora === s);
+      
+      if (turnosEnHora.length > 0) {
+        turnosEnHora.forEach(turno => {
+          html += `<div class="timeline-slot">
+                     <div class="timeline-time">${s}</div>
+                     <div class="timeline-content occupied" onclick="cerrarModal('modalDiaCalendario'); abrirDetalleTurno(${turno.id})" title="Click para ver/editar">
+                        <strong>${turno.paciente || turno.motivo}</strong> (${turno.hora} a ${turno.horaHasta})
+                        <div style="font-size:11px; margin-top:4px; font-weight:600;">Estado: ${turno.estado}</div>
+                     </div>
+                   </div>`;
+        });
+      } else {
+        const overlap = turnosDelDia.some(t => timeToMins(t.hora) <= timeToMins(s) && timeToMins(t.horaHasta) > timeToMins(s));
+        
+        if (!overlap) {
+          let sEnd = minsToTime(timeToMins(s) + 30); 
+          html += `<div class="timeline-slot">
+                     <div class="timeline-time">${s}</div>
+                     <div class="timeline-content free" onclick="cerrarModal('modalDiaCalendario'); abrirModalTurnoForm('${dateStr}', '${s}', '${sEnd}')">
+                        <span>+ Nuevo turno o evento a las ${s}</span>
+                     </div>
+                   </div>`;
+        }
+      }
+    });
+    html += '</div>';
+    document.getElementById('contenidoModalDia').innerHTML = html;
+  }
+
+  async function bloquearDiaCompleto(dateStr) {
+    if (confirm('¿Bloquear todo el día? Se visualizará cerrado en la agenda y en la secretaría.')) {
+      listaTurnosGeneral.push({ id: Date.now(), fecha: dateStr, hora: '00:00', horaHasta: '23:59', paciente: '', motivo: 'Día Bloqueado', estado: 'Confirmado', tipoEvento: 'Otro' });
+      await guardarDatosServidor();
+      renderizarSemana();
+      showToast('Día bloqueado exitosamente');
+    }
+  }
+
+  async function desbloquearDiaCompleto(dateStr) {
+    if (confirm('¿Desea desbloquear este día para habilitar nuevos turnos?')) {
+      listaTurnosGeneral = listaTurnosGeneral.filter(t => !(t.fecha === dateStr && t.motivo === 'Día Bloqueado'));
+      await guardarDatosServidor();
+      renderizarSemana();
+      showToast('Día desbloqueado');
+    }
+  }
+
+  function abrirDetalleTurno(id) {
+    const t = listaTurnosGeneral.find(x => x.id === id);
+    if (!t) return;
+    
+    document.getElementById('verTurnoContent').innerHTML = `
+      <p><strong>Tipo de Evento:</strong> ${t.tipoEvento || 'Consulta'}</p>
+      <p><strong>Título / Paciente:</strong> ${t.paciente || t.motivo}</p>
+      <p><strong>Fecha:</strong> ${t.fecha}</p>
+      <p><strong>Horario:</strong> ${t.hora} a ${t.horaHasta}</p>
+      <p><strong>Motivo / Descripción:</strong> ${t.motivo || '-'}</p>
+      <p><strong>Estado:</strong> ${t.estado}</p>
+    `;
+
+    const msg = 'Para cancelar o editar un turno debes hacerlo desde inicio o desde turnos general.';
+
+    const btnCancel = document.getElementById('btnCancelarTurno');
+    const btnEdit = document.getElementById('btnEditarTurno');
+
+    btnCancel.textContent = '✕ Eliminar';
+    btnCancel.onclick = () => {
+      alert(msg);
+    };
+
+    btnEdit.textContent = '✏️ Editar';
+    btnEdit.onclick = () => {
+      alert(msg);
+    };
+
+    document.getElementById('modalVer').classList.add('show');
+  }
+
+  async function cancelarTurno(id) {
+    if (confirm('¿Desea cancelar definitivamente este evento en la agenda?')) {
+      const t = listaTurnosGeneral.find(x => x.id === id);
+      if (t) {
+        t.estado = 'Cancelado';
+        await guardarDatosServidor();
+        renderizarSemana();
+        showToast('Evento Cancelado');
+        cerrarModal('modalVer');
+      }
+    }
+  }
+
+  function editarTurno(id) {
+    const t = listaTurnosGeneral.find(x => x.id === id);
+    if (!t) return;
+
+    idTurnoModificar = id;
+    document.getElementById('modalTitleMain').textContent = 'Editar Evento';
+    document.getElementById('newTipoEvento').value = t.tipoEvento || 'Otro';
+    
+    let motivoLimpio = t.motivo;
+    if (motivoLimpio.includes(' (')) motivoLimpio = motivoLimpio.split(' (')[0];
+    document.getElementById('newMotivo').value = motivoLimpio;
+
+    document.getElementById('newFecha').value = t.fecha;
+    document.getElementById('newHoraDesde').value = t.hora;
+    document.getElementById('newHoraHasta').value = t.horaHasta;
+
+    cambiarTipoEventoForm();
+    document.getElementById('modalTurno').classList.add('show');
+  }
+
+  function abrirModalTurnoForm(fecha = '', horaDesde = '', horaHasta = '') {
+    idTurnoModificar = null; 
+    document.getElementById('modalTitleMain').textContent = 'Nuevo evento o turno';
+    
+    document.getElementById('newTipoEvento').value = 'Consulta';
+    document.getElementById('newMotivo').value = '';
+    
+    if (fecha) document.getElementById('newFecha').value = fecha;
+    if (horaDesde) document.getElementById('newHoraDesde').value = horaDesde;
+    if (horaHasta) document.getElementById('newHoraHasta').value = horaHasta;
+
+    cambiarTipoEventoForm();
+    document.getElementById('modalTurno').classList.add('show');
+  }
+
+  function cambiarTipoEventoForm() {
+    const tipo = document.getElementById('newTipoEvento').value;
+    const btnSubmit = document.getElementById('btnSubmitForm');
+    const fieldsContainer = document.getElementById('eventoFieldsContainer');
+
+    if (tipo === 'Consulta') {
+      fieldsContainer.style.display = 'none';
+      btnSubmit.textContent = 'Ir al Área Principal para cargar el Turno ➔';
+      btnSubmit.className = 'btn full btn-modificar';
+    } else {
+      fieldsContainer.style.display = 'block';
+      btnSubmit.textContent = 'Guardar Evento en Agenda';
+      btnSubmit.className = 'btn full btn-green';
+    }
+  }
+
+  function actualizarFinAutomatico() {
+    if (!idTurnoModificar) {
+      let start = document.getElementById('newHoraDesde').value;
+      if (start) {
+        document.getElementById('newHoraHasta').value = minsToTime(timeToMins(start) + 30);
+      }
+    }
+  }
+
+  async function guardarTurnoAgenda() {
+    const tipo = document.getElementById('newTipoEvento').value;
+    const fecha = document.getElementById('newFecha').value;
+    const hora = document.getElementById('newHoraDesde').value;
+    const horaHasta = document.getElementById('newHoraHasta').value;
+
+    if (tipo === 'Consulta') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const origen = urlParams.get('origen');
+      if (origen === 'prof') {
+        window.location.href = 'profesionales.html';
+      } else {
+        window.location.href = 'secretaria.html';
+      }
+      return; 
+    }
+
+    const motivo = document.getElementById('newMotivo').value.trim() || tipo;
+
+    if (!fecha || !hora || !horaHasta) { showToast('Falta completar fecha y horarios'); return; }
+
+    if (idTurnoModificar) {
+      const viejo = listaTurnosGeneral.find(x => x.id === idTurnoModificar);
+      if (viejo) viejo.estado = 'Cancelado';
+    }
+
+    let baseId = listaTurnosGeneral.length ? Math.max(...listaTurnosGeneral.map(x => x.id)) + 1 : Date.now();
+
+    const nuevoTurno = {
+      id: baseId,
+      fecha: fecha,
+      hora: hora,
+      horaHasta: horaHasta,
+      paciente: '', 
+      obra: '',
+      motivo: motivo,
+      estado: 'Confirmado',
+      tipoEvento: tipo
+    };
+
+    listaTurnosGeneral.push(nuevoTurno);
+    await guardarDatosServidor();
+    renderizarSemana();
+    
+    showToast(idTurnoModificar ? 'Evento reprogramado' : 'Evento guardado exitosamente');
+    cerrarModal('modalTurno');
+  }
+
+  function cerrarModal(idModal) {
+    document.getElementById(idModal).classList.remove('show');
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Inicializar funciones al cargar la página
+  configurarBotonesRetorno();
+  cargarDatosServidor();
+  // --- LÓGICA DEL MODO OSCURO ---
+    function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('btnModoOscuro');
+    if (document.body.classList.contains('dark-mode')) {
+      localStorage.setItem('theme', 'dark');
+      if (btn) btn.textContent = '☀️';
+    } else {
+      localStorage.setItem('theme', 'light');
+      if (btn) btn.textContent = '🌙';
+    }
+    // Redibuja horas y semana para que los estilos inline no queden en blanco
+    renderizarEscalaTiempo();
+    renderizarSemana();
+  }
+
+  // Comprobar preferencia guardada al cargar la página
+  document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      const btn = document.getElementById('btnModoOscuro');
+      if(btn) btn.textContent = '☀️';
+    }
+  });
+</script>
+</body>
+</html>

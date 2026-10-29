@@ -1,0 +1,1838 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consola Dev Master | Medi-Turnos</title>
+<link rel="icon" type="image/png" href="assets/Logo-MediTurnos.png">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+body {
+  background-color: #f4f7f5;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.topbar-admin {
+  background: #ffffff;
+  border-bottom: 2px solid #b7d4c4;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.brand-admin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-admin img { height: 32px; }
+.brand-admin span {
+  font-weight: 800;
+  color: #1a7a4c;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+}
+
+.admin-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sys-badge {
+  background: #111827;
+  color: #34d399;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot-online {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.nav-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #b7d4c4;
+  background: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  color: #1a7a4c;
+  cursor: pointer;
+}
+
+.main-full {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-head-full {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #b7d4c4;
+}
+
+.permisos-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 992px) {
+  .permisos-columns { grid-template-columns: 1fr; }
+}
+
+.area-card {
+  background: #ffffff;
+  border: 1px solid #b7d4c4;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.area-card h2 {
+  margin-top: 0;
+  color: #1a7a4c;
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 2px solid #e5ebe8;
+  padding-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.modulo-card {
+  background: #ffffff;
+  border: 1px solid #d1e7dd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.modulo-header {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8faf9;
+}
+.modulo-header span {
+  font-weight: 700;
+  font-size: 13px;
+  color: #2c3e50;
+}
+
+.main-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.status-badge.on { 
+  background-color: rgba(16, 185, 129, 0.15); 
+  color: #10b981; 
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.status-badge.off { 
+  background-color: rgba(239, 68, 68, 0.15); 
+  color: #ef4444; 
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.switch-main {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+.switch-main input { opacity: 0; width: 0; height: 0; }
+.slider-main {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ef4444; transition: .3s; border-radius: 22px;
+}
+.slider-main:before {
+  position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+  background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider-main { background-color: #10b981; }
+input:checked + .slider-main:before { transform: translateX(22px); }
+
+.dev-console-drawer {
+  display: none;
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 12px;
+  border-top: 1px solid #374151;
+}
+.dev-console-drawer.open { display: block; }
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #374151;
+  font-size: 12px;
+  transition: opacity 0.2s;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row.sub-level {
+  padding-left: 14px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid #34d399;
+}
+.toggle-row.disabled-row {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.switch-sub {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+}
+.switch-sub input { opacity: 0; width: 0; height: 0; }
+.slider-sub {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #4b5563; transition: .3s; border-radius: 18px;
+}
+.slider-sub:before {
+  position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
+  background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider-sub { background-color: #34d399; }
+input:checked + .slider-sub:before { transform: translateX(16px); }
+
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(17, 24, 39, 0.6); display: none; justify-content: center;
+  align-items: center; z-index: 2000;
+}
+.modal-backdrop.show { display: flex; }
+.modal-box {
+  background: #fff; border-radius: 12px; padding: 24px; width: 100%;
+  max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.modal-box h3 { margin-top: 0; color: #1a7a4c; }
+.modal-form label { display: block; margin-top: 12px; font-size: 13px; font-weight: 700; color: #374151; }
+.modal-form input, .modal-form select {
+  width: 100%; padding: 8px 12px; margin-top: 4px; border: 1px solid #b7d4c4;
+  border-radius: 6px; box-sizing: border-box;
+}
+
+.toast {
+  position: fixed; bottom: 20px; right: 20px; background: #1a7a4c; color: #fff;
+  padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  z-index: 9999;
+}
+.toast.show { opacity: 1; }
+
+/* MODO OSCURO */
+body.dark-mode {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+body.dark-mode .topbar-admin {
+  background: #1f2937 !important;
+  border-bottom-color: #374151 !important;
+}
+body.dark-mode .brand-admin span {
+  color: #34d399 !important;
+}
+body.dark-mode .page-head-full,
+body.dark-mode .area-card,
+body.dark-mode .modulo-card,
+body.dark-mode .modal-box {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+body.dark-mode .area-card h2 {
+  color: #34d399 !important;
+  border-bottom-color: #374151 !important;
+}
+body.dark-mode .modulo-header {
+  background: #111827 !important;
+}
+body.dark-mode .modulo-header span {
+  color: #f9fafb !important;
+}
+body.dark-mode .nav-select {
+  background: #111827 !important;
+  color: #34d399 !important;
+  border-color: #374151 !important;
+}
+body.dark-mode .modal-form label {
+  color: #d1d5db !important;
+}
+body.dark-mode .modal-form input, 
+body.dark-mode .modal-form select {
+  background: #111827 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+body.dark-mode #menuPerfil {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+body.dark-mode #menuPerfil button {
+  color: #f9fafb !important;
+}
+body.dark-mode #menuPerfil button:hover {
+  background: #374151 !important;
+}
+body.dark-mode hr {
+  border-top-color: #374151 !important;
+}
+</style>
+</head>
+<body>
+
+<header class="topbar-admin">
+  <div class="brand-admin">
+    <img src="assets/Logo-MediTurnos.png" alt="Medi-Turnos" onerror="this.src='https://via.placeholder.com/150x40?text=Medi-Turnos'">
+    <span>CONSOLA MASTER CONTROL</span>
+  </div>
+
+  <div class="admin-tools">
+    <div class="sys-badge">
+      <span class="dot-online"></span> NODE.JS PORT: 3000
+    </div>
+
+    <button class="btn btn-green" onclick="abrirModalUsuario()">＋ Nuevo Usuario</button>
+    <button class="btn btn-green" style="background:#0284c7; border-color:#0284c7;" onclick="abrirModalCargarObras()">📂 Cargar Obras Sociales</button>
+
+    <select class="nav-select" onchange="if(this.value) location.href=this.value;">
+      <option value="">🔍 Inspeccionar Vista...</option>
+      <option value="pacientes.html">Vista Pacientes</option>
+      <option value="profesional-dashboard.html">Vista Profesional</option>
+      <option value="secretaria.html">Vista Secretaría</option>
+      <option value="profesionales.html">Directorio Médico</option>
+      <option value="index.html">← Salir</option>
+    </select>
+
+  
+    <button class="btn btn-light" style="border:1px solid #b7d4c4;" onclick="toggleModoOscuro()" title="Cambiar modo oscuro/claro">🌙</button>
+
+    <!-- Menú de usuario -->
+    <div class="doctor-box" style="position:relative; margin-left:12px;">
+      <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="toggleMenuPerfil()">
+        <div class="doctor-avatar" id="avatarUsuarioRegistrado" style="width:36px; height:36px; border-radius:50%; background:#111827; color:#34d399; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;">AD</div>
+        <div>
+          <strong id="nombreUsuarioRegistrado" style="font-size:13px; color:#1a7a4c;">Admin ▾</strong>
+          <small id="rolUsuarioRegistrado" style="display:block; font-size:11px; color:#5a6b60;">Administrador Master</small>
+        </div>
+      </div>
+
+      <div id="menuPerfil" style="display:none; position:absolute; top:100%; right:0; background:#fff; border:1px solid #b7d4c4; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,0.12); min-width:180px; z-index:1000; overflow:hidden; margin-top:6px;">
+        <button onclick="abrirModalPerfil()" style="width:100%; text-align:left; padding:10px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#1a7a4c;">👤 Ver / Editar Perfil</button>
+        <button onclick="logout()" style="width:100%; text-align:left; padding:10px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#dc2626; border-top:1px solid #e5ebe8;">↪ Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main-full">
+  <div class="page-head-full">
+    <div>
+      <h1 style="margin:0; font-size: 20px; color:#1a7a4c;">Panel de Permisos y Módulos del Sistema</h1>
+      <p style="margin:4px 0 0 0; font-size:13px; color:#5a6b60;">Control centralizado sin tocar el código. Al activar cada módulo se despliega la consola de permisos.</p>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button class="btn btn-light" style="border:1px solid #0284c7; color:#0284c7; font-weight:bold;" onclick="abrirModalTesting()">🔑 Datos de Testing</button>
+      <button class="btn btn-light" style="border:1px solid #b7d4c4;" onclick="resetearConfiguracion()">🔄 Restablecer Permisos</button>
+    </div>
+  </div>
+
+  <div class="permisos-columns">
+
+    <!-- COLUMNA 1: PACIENTES -->
+    <div class="area-card">
+      <h2>Pacientes</h2>
+
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Mis Turnos</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_pac_turnos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_pac_turnos" checked onchange="toggleModuloMain('pac_turnos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_pac_turnos">
+          <div class="toggle-row">
+            <span>Ver Turnos</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_turnos_ver" checked onchange="updatePermiso('pac_turnos_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar / Reprogramar</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_turnos_editar" checked onchange="updatePermiso('pac_turnos_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Solicitar Nuevo</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_turnos_agregar" checked onchange="updatePermiso('pac_turnos_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Cancelar / Eliminar</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_turnos_eliminar" onchange="updatePermiso('pac_turnos_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Datos Personales</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_pac_datos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_pac_datos" checked onchange="toggleModuloMain('pac_datos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_pac_datos">
+          <div class="toggle-row">
+            <span>Ver Ficha</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_datos_ver" checked onchange="updatePermiso('pac_datos_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Perfil</span>
+            <label class="switch-sub"><input type="checkbox" id="pac_datos_editar" checked onchange="updatePermiso('pac_datos_editar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA 2: ÁREA PROFESIONAL -->
+    <div class="area-card">
+      <h2>Área Profesional</h2>
+
+      <!-- PÁGINA DE INICIO (DASHBOARD) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Página de Inicio (Dashboard)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_inicio">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_inicio" checked onchange="toggleModuloMain('prof_inicio')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_inicio">
+          <div class="toggle-row">
+            <span>Abrir calendario</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_calendario_ver" checked onchange="updatePermiso('prof_inicio_calendario_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Reservar horarios libres</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_calendario_reservar" checked onchange="updatePermiso('prof_inicio_calendario_reservar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar horarios ocupados</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_calendario_editar" checked onchange="updatePermiso('prof_inicio_calendario_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row" style="background: rgba(255,255,255,0.02); margin-top: 4px; padding-top: 8px; border-top: 1px dashed #4b5563;">
+            <span>Nuevo turno/evento (＋)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_nueva_consulta" checked onchange="updatePermiso('prof_inicio_nueva_consulta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Marcar en espera (🙋‍♂️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_en_espera" checked onchange="updatePermiso('prof_inicio_en_espera')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver estado paciente (👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_ver_paciente" checked onchange="updatePermiso('prof_inicio_ver_paciente')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Modificar turno (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_modificar_turno" checked onchange="updatePermiso('prof_inicio_modificar_turno')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Cancelar turno (⬇️️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_cancelar_turno" checked onchange="updatePermiso('prof_inicio_cancelar_turno')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Google Calendar (📅)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_google_calendar" checked onchange="updatePermiso('prof_inicio_google_calendar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Atender y registrar consulta (✅)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_inicio_atender_consulta" checked onchange="updatePermiso('prof_inicio_atender_consulta')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PACIENTES -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Pacientes</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_pacientes">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_pacientes" checked onchange="toggleModuloMain('prof_pacientes')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_pacientes">
+          <div class="toggle-row">
+            <span>Ver Paciente (Ficha Completa 👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_ver" checked onchange="updatePermiso('prof_pacientes_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Habilitados</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_ver_habilitados" checked onchange="updatePermiso('prof_pacientes_ver_habilitados')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Deshabilitados</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_ver_deshabilitados" checked onchange="updatePermiso('prof_pacientes_ver_deshabilitados')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Agregar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_agregar" checked onchange="updatePermiso('prof_pacientes_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_editar" checked onchange="updatePermiso('prof_pacientes_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Deshabilitar / Habilitar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_eliminar" checked onchange="updatePermiso('prof_pacientes_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver HC</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_hc" checked onchange="updatePermiso('prof_pacientes_hc')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Hacer Receta (Botón 💊)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_receta" checked onchange="updatePermiso('prof_pacientes_receta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Asignar Turno Rápido (📅)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_pacientes_turnos" checked onchange="updatePermiso('prof_pacientes_turnos')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBRAS SOCIALES -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Obras Sociales</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_obras">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_obras" checked onchange="toggleModuloMain('prof_obras')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_obras">
+          <div class="toggle-row">
+            <span>Ver Detalle de Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="prof_obras_detalle" checked onchange="updatePermiso('prof_obras_detalle')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          <div class="toggle-row sub-level" id="row_prof_obras_autorizaciones">
+            <span>↳ Permitir Autorización</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="prof_obras_autorizaciones" checked onchange="updatePermiso('prof_obras_autorizaciones')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span>Agregar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="prof_obras_agregar" checked onchange="updatePermiso('prof_obras_agregar')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="prof_obras_editar" checked onchange="updatePermiso('prof_obras_editar')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <span>Activar o Desactivar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="prof_obras_estado" checked onchange="updatePermiso('prof_obras_estado')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TURNOS GENERAL -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Turnos General</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_turnos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_turnos" checked onchange="toggleModuloMain('prof_turnos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_turnos">
+          <div class="toggle-row">
+            <span>Cargar Nuevo Turno (＋)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_agregar" checked onchange="updatePermiso('prof_turnos_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Marcar En Sala (🙋‍♂️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_ensala" checked onchange="updatePermiso('prof_turnos_ensala')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Modificar / Editar Turno (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_editar" checked onchange="updatePermiso('prof_turnos_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Cancelar Turno (⬇️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_cancelar" checked onchange="updatePermiso('prof_turnos_cancelar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Finalizar Turno (✅)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_finalizar" checked onchange="updatePermiso('prof_turnos_finalizar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Eliminar Registro (✕)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_turnos_eliminar" checked onchange="updatePermiso('prof_turnos_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL CLÍNICO -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Historial Clínico</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_hc">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_hc" checked onchange="toggleModuloMain('prof_hc')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_hc">
+          <div class="toggle-row">
+            <span>Cargar Consulta a Paciente (🩺)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_hc_consulta" checked onchange="updatePermiso('prof_hc_consulta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Ficha Historial (👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_hc_ver" checked onchange="updatePermiso('prof_hc_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row sub-level" id="row_prof_hc_imprimir">
+            <span>↳ Permitir Imprimir (🖨️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_hc_imprimir" checked onchange="updatePermiso('prof_hc_imprimir')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row sub-level" id="row_prof_hc_descargar">
+            <span>↳ Permitir Descargar PDF (📄)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_hc_descargar" checked onchange="updatePermiso('prof_hc_descargar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Contacto/Cobertura (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_hc_editar" checked onchange="updatePermiso('prof_hc_editar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MÓDULO HACER RECETA (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Hacer Receta (💊)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_receta">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_receta" checked onchange="toggleModuloMain('prof_receta')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_receta">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo.
+          </div>
+        </div>
+      </div>
+
+      <!-- MÓDULO AGENDA (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Agenda (📅)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_agenda_directo">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_agenda_directo" checked onchange="toggleModuloMain('prof_agenda_directo')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_agenda_directo">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo a Agenda.
+          </div>
+        </div>
+      </div>
+
+      <!-- MÓDULO ESTADÍSTICAS (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Estadísticas (📊)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_estadisticas">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_estadisticas" checked onchange="toggleModuloMain('prof_estadisticas')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_estadisticas">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo a Estadísticas.
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTUALIZACIONES Y CONFIGURACIÓN -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Actualizaciones / Configuración</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_actualizaciones">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_actualizaciones" checked onchange="toggleModuloMain('prof_actualizaciones')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_actualizaciones">
+          <div class="toggle-row">
+            <span>Tiempos de Consulta</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_actualizaciones_tiempos" checked onchange="updatePermiso('prof_actualizaciones_tiempos')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Días y Horarios de Atención</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_actualizaciones_agenda" checked onchange="updatePermiso('prof_actualizaciones_agenda')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Motivos de Consulta</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_actualizaciones_motivos" checked onchange="updatePermiso('prof_actualizaciones_motivos')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACTOS / ACCESOS (PROFESIONAL) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Contactos / Accesos</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_prof_contactos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_prof_contactos" checked onchange="toggleModuloMain('prof_contactos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_prof_contactos">
+          <div class="toggle-row">
+            <span>Ver Contactos</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_contactos_ver" checked onchange="updatePermiso('prof_contactos_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Registro</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_contactos_editar" checked onchange="updatePermiso('prof_contactos_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Agregar Contacto</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_contactos_agregar" checked onchange="updatePermiso('prof_contactos_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Eliminar Contacto</span>
+            <label class="switch-sub"><input type="checkbox" id="prof_contactos_eliminar" checked onchange="updatePermiso('prof_contactos_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA 3: ÁREA ADMINISTRATIVA -->
+    <div class="area-card">
+      <h2>Área Administrativa</h2>
+
+      <!-- PÁGINA DE INICIO (DASHBOARD & CALENDARIO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Página de Inicio (Dashboard)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_inicio">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_inicio" checked onchange="toggleModuloMain('sec_inicio')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_inicio">
+          <div class="toggle-row">
+            <span>Abrir calendario</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_calendario_ver" checked onchange="updatePermiso('sec_inicio_calendario_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Reservar horarios libres</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_calendario_reservar" checked onchange="updatePermiso('sec_inicio_calendario_reservar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar horarios ocupados</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_calendario_editar" checked onchange="updatePermiso('sec_inicio_calendario_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row" style="background: rgba(255,255,255,0.02); margin-top: 4px; padding-top: 8px; border-top: 1px dashed #4b5563;">
+            <span>Nuevo turno/evento (＋)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_nueva_consulta" checked onchange="updatePermiso('sec_inicio_nueva_consulta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Marcar en espera (🙋‍♂️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_en_espera" checked onchange="updatePermiso('sec_inicio_en_espera')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver estado paciente (👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_ver_paciente" checked onchange="updatePermiso('sec_inicio_ver_paciente')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Modificar turno (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_modificar_turno" checked onchange="updatePermiso('sec_inicio_modificar_turno')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Cancelar turno (⬇️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_cancelar_turno" checked onchange="updatePermiso('sec_inicio_cancelar_turno')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Google Calendar (📅)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_google_calendar" checked onchange="updatePermiso('sec_inicio_google_calendar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Atender y registrar consulta (✅)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_inicio_atender_consulta" checked onchange="updatePermiso('sec_inicio_atender_consulta')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PACIENTES -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Pacientes</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_pacientes">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_pacientes" checked onchange="toggleModuloMain('sec_pacientes')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_pacientes">
+          <div class="toggle-row">
+            <span>Ver Paciente (Ficha Completa 👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_ver" checked onchange="updatePermiso('sec_pacientes_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Habilitados</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_ver_habilitados" checked onchange="updatePermiso('sec_pacientes_ver_habilitados')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Deshabilitados</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_ver_deshabilitados" checked onchange="updatePermiso('sec_pacientes_ver_deshabilitados')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Agregar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_agregar" checked onchange="updatePermiso('sec_pacientes_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_editar" checked onchange="updatePermiso('sec_pacientes_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Deshabilitar / Habilitar paciente</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_eliminar" checked onchange="updatePermiso('sec_pacientes_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver HC</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_hc" checked onchange="updatePermiso('sec_pacientes_hc')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Hacer Receta (Botón 💊)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_receta" checked onchange="updatePermiso('sec_pacientes_receta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Asignar Turno Rápido (📅)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_pacientes_turnos" checked onchange="updatePermiso('sec_pacientes_turnos')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+ <!-- OBRAS SOCIALES -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Obras Sociales</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_obras">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_obras" checked onchange="toggleModuloMain('sec_obras')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_obras">
+          
+          <div class="toggle-row">
+            <span>Ver Detalle de Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="sec_obras_detalle" checked onchange="updatePermiso('sec_obras_detalle')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-row sub-level" id="row_sec_obras_autorizaciones">
+            <span>↳ Permitir Autorización</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="sec_obras_autorizaciones" checked onchange="updatePermiso('sec_obras_autorizaciones')">
+              <span class="slider-sub" id="slider_autorizar"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-row">
+            <span>Agregar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="sec_obras_agregar" checked onchange="updatePermiso('sec_obras_agregar')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-row">
+            <span>Editar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="sec_obras_editar" checked onchange="updatePermiso('sec_obras_editar')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-row">
+            <span>Activar o Desactivar Obra Social</span>
+            <label class="switch-sub">
+              <input type="checkbox" id="sec_obras_estado" checked onchange="updatePermiso('sec_obras_estado')">
+              <span class="slider-sub"></span>
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TURNOS GENERAL -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Turnos General</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_turnos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_turnos" checked onchange="toggleModuloMain('sec_turnos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_turnos">
+          <div class="toggle-row">
+            <span>Cargar Nuevo Turno (＋)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_agregar" checked onchange="updatePermiso('sec_turnos_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Marcar En Sala (🙋‍♂️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_ensala" checked onchange="updatePermiso('sec_turnos_ensala')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Modificar / Editar Turno (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_editar" checked onchange="updatePermiso('sec_turnos_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Cancelar Turno (⬇️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_cancelar" checked onchange="updatePermiso('sec_turnos_cancelar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Finalizar Turno (✅)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_finalizar" checked onchange="updatePermiso('sec_turnos_finalizar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Eliminar Registro (✕)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_turnos_eliminar" checked onchange="updatePermiso('sec_turnos_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL CLÍNICO -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Historial Clínico</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_hc">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_hc" checked onchange="toggleModuloMain('sec_hc')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_hc">
+          <div class="toggle-row">
+            <span>Cargar Consulta a Paciente (🩺)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_hc_consulta" checked onchange="updatePermiso('sec_hc_consulta')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Ver Ficha Historial (👁️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_hc_ver" checked onchange="updatePermiso('sec_hc_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row sub-level" id="row_sec_hc_imprimir">
+            <span>↳ Permitir Imprimir (🖨️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_hc_imprimir" checked onchange="updatePermiso('sec_hc_imprimir')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row sub-level" id="row_sec_hc_descargar">
+            <span>↳ Permitir Descargar PDF (📄)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_hc_descargar" checked onchange="updatePermiso('sec_hc_descargar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Contacto/Cobertura (✏️)</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_hc_editar" checked onchange="updatePermiso('sec_hc_editar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- MÓDULO HACER RECETA (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Hacer Receta (💊)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_receta">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_receta" checked onchange="toggleModuloMain('sec_receta')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_receta">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo.
+          </div>
+        </div>
+      </div>
+
+      <!-- MÓDULO AGENDA (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Agenda (📅)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_agenda_directo">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_agenda_directo" checked onchange="toggleModuloMain('sec_agenda_directo')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_agenda_directo">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo a Agenda.
+          </div>
+        </div>
+      </div>
+
+      <!-- MÓDULO ESTADÍSTICAS (ACCESO DIRECTO) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Estadísticas (📊)</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_estadisticas">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_estadisticas" checked onchange="toggleModuloMain('sec_estadisticas')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_estadisticas">
+          <div style="padding: 15px; font-size: 13px; color: #94a3b8; text-align: center; font-style: italic;">
+            Módulo de acceso directo externo a Estadísticas.
+          </div>
+        </div>
+      </div>
+      
+      <!-- ACTUALIZACIONES Y CONFIGURACIÓN -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Actualizaciones / Configuración</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_actualizaciones">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_actualizaciones" checked onchange="toggleModuloMain('sec_actualizaciones')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_actualizaciones">
+          <div class="toggle-row">
+            <span>Tiempos de Consulta</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_actualizaciones_tiempos" checked onchange="updatePermiso('sec_actualizaciones_tiempos')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Días y Horarios de Atención</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_actualizaciones_agenda" checked onchange="updatePermiso('sec_actualizaciones_agenda')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Motivos de Consulta</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_actualizaciones_motivos" checked onchange="updatePermiso('sec_actualizaciones_motivos')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACTOS / ACCESOS (SECRETARÍA) -->
+      <div class="modulo-card">
+        <div class="modulo-header">
+          <span>Contactos / Accesos</span>
+          <div class="main-switch-container">
+            <span class="status-badge on" id="badge_sec_contactos">ON</span>
+            <label class="switch-main">
+              <input type="checkbox" id="main_sec_contactos" checked onchange="toggleModuloMain('sec_contactos')">
+              <span class="slider-main"></span>
+            </label>
+          </div>
+        </div>
+        <div class="dev-console-drawer open" id="drawer_sec_contactos">
+          <div class="toggle-row">
+            <span>Ver Contactos</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_contactos_ver" checked onchange="updatePermiso('sec_contactos_ver')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Editar Registro</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_contactos_editar" checked onchange="updatePermiso('sec_contactos_editar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Agregar Contacto</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_contactos_agregar" checked onchange="updatePermiso('sec_contactos_agregar')"><span class="slider-sub"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span>Eliminar Contacto</span>
+            <label class="switch-sub"><input type="checkbox" id="sec_contactos_eliminar" checked onchange="updatePermiso('sec_contactos_eliminar')"><span class="slider-sub"></span></label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL PARA CREAR NUEVO USUARIO -->
+<div class="modal-backdrop" id="modalUsuario">
+  <div class="modal-box">
+    <h3>Dar de Alta Nuevo Usuario</h3>
+    <p style="font-size:12px; color:#5a6b60;">Asigná las credenciales y el rol de acceso al sistema.</p>
+    
+    <div class="modal-form">
+      <label>Nombre de Usuario</label>
+      <input type="text" id="newUsername" placeholder="ej: Juan Perez">
+      
+      <label>DNI</label>
+      <input type="text" id="newDni" placeholder="Sin puntos, ej: 30123456">
+      
+      <label>Correo Electrónico</label>
+      <input type="email" id="newEmail" placeholder="ej: usuario@correo.com">
+      
+      <label>Contraseña (Válida por 3 días)</label>
+      <input type="password" id="newPassword" placeholder="••••••••">
+      
+      <label>Rol de Acceso</label>
+      <select id="newUserRole">
+        <option value="paciente">Paciente</option>
+        <option value="profesional">Profesional</option>
+        <option value="secretaria">Administrador</option>
+        <option value="admin">Administrador Master (Admin)</option>
+      </select>
+      
+      <div style="display:flex; gap:8px; margin-top:20px;">
+        <button class="btn btn-green" style="flex:1;" onclick="guardarNuevoUsuario()">Guardar y Enviar Acceso</button>
+        <button class="btn btn-light" style="border:1px solid #b7d4c4;" onclick="cerrarModalUsuario()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARA CARGAR OBRAS SOCIALES DESDE CSV/TXT -->
+<div class="modal-backdrop" id="modalCargarObras">
+  <div class="modal-box">
+    <h3>Cargar Obras Sociales (CSV/TXT)</h3>
+    <p style="font-size:12px; color:#5a6b60;">El archivo debe contener las columnas separadas por comas (o punto y coma) estrictamente en este orden:<br>
+    <strong>Obra social, Estado, Nombre de contacto, Teléfono, Email, Link de autorizaciones</strong></p>
+    
+    <div class="modal-form">
+      <label>Seleccionar Archivo</label>
+      <input type="file" id="archivoObras" accept=".csv, .txt">
+      
+      <div style="display:flex; gap:8px; margin-top:20px;">
+        <button class="btn btn-green" style="flex:1;" onclick="procesarArchivoObras()">Cargar y Guardar</button>
+        <button class="btn btn-light" style="border:1px solid #b7d4c4;" onclick="cerrarModalCargarObras()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PERFIL DE USUARIO (ÚNICO Y CORREGIDO) -->
+<div class="modal-backdrop" id="modalPerfilUsuario">
+  <div class="modal-box" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin-top:0; color:#1a7a4c;">Mis Datos Personales</h3>
+        <button onclick="cerrarModalPerfil()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#1a7a4c;">&times;</button>
+    </div>
+    <p style="font-size:12px; color:#5a6b60; margin-bottom:15px;">Gestioná tu información personal y de acceso.</p>
+    
+    <div class="modal-form">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <label>Nombre de Usuario <input type="text" id="perfilNombre" style="font-weight:bold;"></label>
+        <label>Rol <input type="text" id="perfilRol" disabled style="background:#f1f5f9; font-weight:bold; border: 1px solid #b7d4c4;"></label>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+        <label>DNI / Documento <input type="text" id="perfilDni" disabled style="background:#f1f5f9; font-weight:bold; border: 1px solid #b7d4c4;"></label>
+        <label>Teléfono <input type="text" id="perfilTelefono" placeholder="Ej. 1155551234"></label>
+      </div>
+      <label style="margin-top:10px; display:block;">Correo Electrónico <input type="email" id="perfilCorreo" placeholder="Ej. correo@mail.com"></label>
+      
+      <button class="btn btn-green" style="width:100%; margin-top:16px; padding:10px;" onclick="guardarPerfil()">Guardar Datos</button>
+
+      <hr style="border: 0; border-top: 1px solid #e5ebe8; margin: 20px 0;">
+
+      <!-- Botón desplegable para contraseña -->
+      <button class="btn btn-light" type="button" style="width:100%; margin-bottom:10px; border:1px solid #b7d4c4; background:#e5ebe8; color:#1a7a4c; font-weight: bold; cursor:pointer; padding:10px; border-radius:6px;" onclick="document.getElementById('seccionPassword').style.display = document.getElementById('seccionPassword').style.display === 'none' ? 'block' : 'none'">🔒 Cambiar Contraseña ▾</button>
+
+      <div id="seccionPassword" style="display:none; background: #31643e; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
+          <label>Contraseña Actual <input type="password" id="passActual" placeholder="Ingresá tu contraseña actual" style="margin-top:4px;"></label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+              <label>Nueva Contraseña <input type="password" id="passNueva" placeholder="Nueva contraseña" style="margin-top:4px;"></label>
+              <label>Repetir Nueva <input type="password" id="passRepetir" placeholder="Repetir nueva" style="margin-top:4px;"></label>
+          </div>
+          <button class="btn btn-green" style="width:100%; margin-top:16px; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="cambiarPassword()">Actualizar Contraseña</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<!-- MODAL DE CREDENCIALES DE TESTING -->
+<div class="modal-backdrop" id="modalTesting">
+  <div class="modal-box">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin-top:0; color:#1a7a4c;">🔑 Credenciales de Prueba</h3>
+      <button onclick="document.getElementById('modalTesting').classList.remove('show')" style="background:none; border:none; font-size:24px; cursor:pointer; color:#1a7a4c;">&times;</button>
+    </div>
+    <p style="font-size:13px; color:#5a6b60; margin-bottom:15px; border-bottom:1px solid #e5ebe8; padding-bottom:10px;">
+      Todas las cuentas de prueba utilizan la misma clave: <b>1234</b>
+    </p>
+    
+    <div style="background:#f8faf9; padding:12px; border-radius:8px; border:1px solid #b7d4c4; font-size:14px;">
+      <div style="margin-bottom:8px;"><strong>🛡️ Admin:</strong> <span style="font-family:monospace; background:#e5ebe8; padding:2px 6px; border-radius:4px;">admin</span></div>
+      <div style="margin-bottom:8px;"><strong>📋 Secretaría:</strong> <span style="font-family:monospace; background:#e5ebe8; padding:2px 6px; border-radius:4px;">secretaria</span></div>
+      <div style="margin-bottom:8px;"><strong>🩺 Doctora:</strong> <span style="font-family:monospace; background:#e5ebe8; padding:2px 6px; border-radius:4px;">doctora</span></div>
+      <div><strong>👤 Paciente:</strong> <span style="font-family:monospace; background:#e5ebe8; padding:2px 6px; border-radius:4px;">paciente</span> o <span style="font-family:monospace; background:#e5ebe8; padding:2px 6px; border-radius:4px;">32456789</span></div>
+    </div>
+    <button class="btn btn-green" style="width:100%; margin-top:16px;" onclick="document.getElementById('modalTesting').classList.remove('show')">Cerrar</button>
+  </div>
+</div>
+<script>
+const devConfig = JSON.parse(localStorage.getItem('medi_dev_config')) || {};
+
+function syncDependenciaDetalle() {
+  // 1. Dependencia de Obras Sociales (Secretaría)
+  const chkDetalleSec = document.getElementById('sec_obras_detalle');
+  const chkAutoSec = document.getElementById('sec_obras_autorizaciones');
+  const rowAutoSec = document.getElementById('row_sec_obras_autorizaciones');
+  if (chkDetalleSec && chkAutoSec && rowAutoSec) {
+    if (chkDetalleSec.checked) {
+      rowAutoSec.classList.remove('disabled-row'); chkAutoSec.disabled = false;
+    } else {
+      rowAutoSec.classList.add('disabled-row'); chkAutoSec.checked = false; chkAutoSec.disabled = true;
+      devConfig['sec_obras_autorizaciones'] = false;
+    }
+  }
+
+  // 1b. Dependencia de Obras Sociales (Profesional)
+  const chkDetalleProf = document.getElementById('prof_obras_detalle');
+  const chkAutoProf = document.getElementById('prof_obras_autorizaciones');
+  const rowAutoProf = document.getElementById('row_prof_obras_autorizaciones');
+  if (chkDetalleProf && chkAutoProf && rowAutoProf) {
+    if (chkDetalleProf.checked) {
+      rowAutoProf.classList.remove('disabled-row'); chkAutoProf.disabled = false;
+    } else {
+      rowAutoProf.classList.add('disabled-row'); chkAutoProf.checked = false; chkAutoProf.disabled = true;
+      devConfig['prof_obras_autorizaciones'] = false;
+    }
+  }
+
+  // 2. Dependencias de Historial Clínico (Secretaría)
+  const chkHcVerSec = document.getElementById('sec_hc_ver');
+  const chkHcImpSec = document.getElementById('sec_hc_imprimir');
+  const chkHcDescSec = document.getElementById('sec_hc_descargar');
+  const rowHcImpSec = document.getElementById('row_sec_hc_imprimir');
+  const rowHcDescSec = document.getElementById('row_sec_hc_descargar');
+  if (chkHcVerSec && chkHcImpSec && chkHcDescSec && rowHcImpSec && rowHcDescSec) {
+    if (chkHcVerSec.checked) {
+      rowHcImpSec.classList.remove('disabled-row'); rowHcDescSec.classList.remove('disabled-row');
+      chkHcImpSec.disabled = false; chkHcDescSec.disabled = false;
+    } else {
+      rowHcImpSec.classList.add('disabled-row'); rowHcDescSec.classList.add('disabled-row');
+      chkHcImpSec.checked = false; chkHcDescSec.checked = false;
+      chkHcImpSec.disabled = true; chkHcDescSec.disabled = true;
+      devConfig['sec_hc_imprimir'] = false; devConfig['sec_hc_descargar'] = false;
+    }
+  }
+
+  // 2b. Dependencias de Historial Clínico (Profesional)
+  const chkHcVerProf = document.getElementById('prof_hc_ver');
+  const chkHcImpProf = document.getElementById('prof_hc_imprimir');
+  const chkHcDescProf = document.getElementById('prof_hc_descargar');
+  const rowHcImpProf = document.getElementById('row_prof_hc_imprimir');
+  const rowHcDescProf = document.getElementById('row_prof_hc_descargar');
+  if (chkHcVerProf && chkHcImpProf && chkHcDescProf && rowHcImpProf && rowHcDescProf) {
+    if (chkHcVerProf.checked) {
+      rowHcImpProf.classList.remove('disabled-row'); rowHcDescProf.classList.remove('disabled-row');
+      chkHcImpProf.disabled = false; chkHcDescProf.disabled = false;
+    } else {
+      rowHcImpProf.classList.add('disabled-row'); rowHcDescProf.classList.add('disabled-row');
+      chkHcImpProf.checked = false; chkHcDescProf.checked = false;
+      chkHcImpProf.disabled = true; chkHcDescProf.disabled = true;
+      devConfig['prof_hc_imprimir'] = false; devConfig['prof_hc_descargar'] = false;
+    }
+  }
+}
+
+function toggleModuloMain(modKey) {
+  const mainSwitch = document.getElementById(`main_${modKey}`);
+  const drawer = document.getElementById(`drawer_${modKey}`);
+  const badge = document.getElementById(`badge_${modKey}`);
+
+  if (!mainSwitch || !drawer || !badge) return;
+
+  const isEnabled = mainSwitch.checked;
+  devConfig[`main_${modKey}`] = isEnabled;
+
+  if (isEnabled) {
+    drawer.classList.add('open');
+    badge.textContent = 'ON';
+    badge.className = 'status-badge on';
+    showToast(`Módulo [${modKey}] ACTIVADO`);
+  } else {
+    drawer.classList.remove('open');
+    badge.textContent = 'OFF';
+    badge.className = 'status-badge off';
+    showToast(`Módulo [${modKey}] DESACTIVADO`);
+  }
+
+  localStorage.setItem('medi_dev_config', JSON.stringify(devConfig));
+}
+
+function updatePermiso(key) {
+  const chk = document.getElementById(key);
+  if (!chk) return;
+  
+  devConfig[key] = chk.checked;
+
+  // Lógicas cruzadas de H.C. (Secretaría)
+  if (key === 'sec_pacientes_hc') {
+    const chkVerHC = document.getElementById('sec_hc_ver');
+    if (chkVerHC) {
+      chkVerHC.checked = chk.checked;
+      devConfig['sec_hc_ver'] = chk.checked;
+      syncDependenciaDetalle();
+    }
+  } else if (key === 'sec_hc_ver') {
+    const chkPacHC = document.getElementById('sec_pacientes_hc');
+    if (chkPacHC) {
+      chkPacHC.checked = chk.checked;
+      devConfig['sec_pacientes_hc'] = chk.checked;
+    }
+    syncDependenciaDetalle();
+  }
+
+  // Lógicas cruzadas de H.C. (Profesional)
+  if (key === 'prof_pacientes_hc') {
+    const chkVerHCProf = document.getElementById('prof_hc_ver');
+    if (chkVerHCProf) {
+      chkVerHCProf.checked = chk.checked;
+      devConfig['prof_hc_ver'] = chk.checked;
+      syncDependenciaDetalle();
+    }
+  } else if (key === 'prof_hc_ver') {
+    const chkPacHCProf = document.getElementById('prof_pacientes_hc');
+    if (chkPacHCProf) {
+      chkPacHCProf.checked = chk.checked;
+      devConfig['prof_pacientes_hc'] = chk.checked;
+    }
+    syncDependenciaDetalle();
+  }
+
+  // Lógica de autorizaciones dependiente
+  if (key === 'sec_obras_detalle' || key === 'sec_hc_ver' || key === 'prof_obras_detalle' || key === 'prof_hc_ver') {
+    syncDependenciaDetalle();
+  }
+
+  localStorage.setItem('medi_dev_config', JSON.stringify(devConfig));
+  showToast(`Permiso [${key}]: ${chk.checked ? 'HABILITADO' : 'DESHABILITADO'}`);
+}
+
+function abrirModalUsuario() {
+  document.getElementById('modalUsuario').classList.add('show');
+}
+function abrirModalTesting() {
+  document.getElementById('modalTesting').classList.add('show');
+}
+function cerrarModalUsuario() {
+  document.getElementById('modalUsuario').classList.remove('show');
+  document.getElementById('newUsername').value = '';
+  document.getElementById('newDni').value = '';
+  document.getElementById('newEmail').value = '';
+  document.getElementById('newPassword').value = '';
+}
+
+function guardarNuevoUsuario() {
+  const user = document.getElementById('newUsername').value.trim();
+  const dni = document.getElementById('newDni').value.trim();
+  const email = document.getElementById('newEmail').value.trim();
+  const pass = document.getElementById('newPassword').value.trim();
+  const role = document.getElementById('newUserRole').value;
+
+  if (!user || !dni || !email || !pass) {
+    showToast('Por favor, completá todos los campos');
+    return;
+  }
+
+  // Calcular fecha de vencimiento (3 días desde hoy)
+  const fechaVencimiento = new Date();
+  fechaVencimiento.setDate(fechaVencimiento.getDate() + 3);
+  const vencimientoStr = fechaVencimiento.toLocaleDateString('es-AR');
+
+  // Guardar usuario en LocalStorage con nuevos atributos
+  const usuariosGuardados = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+  usuariosGuardados.push({ 
+    usuario: user, 
+    dni: dni, 
+    email: email, 
+    password: pass, 
+    rol: role, 
+    expiracion: vencimientoStr 
+  });
+  localStorage.setItem('medi_usuarios', JSON.stringify(usuariosGuardados));
+
+  // Determinar vista según el rol asignado
+  let vistaAsignada = '';
+  if (role === 'paciente') vistaAsignada = 'pacientes.html';
+  else if (role === 'profesional') vistaAsignada = 'profesionales.html';
+  else if (role === 'secretaria') vistaAsignada = 'secretaria.html';
+  else if (role === 'admin') vistaAsignada = 'permisos.html';
+
+  // Generar URL de acceso asumiendo la misma ruta donde se encuentra permisos.html
+  const urlAcceso = window.location.href.replace('permisos.html', vistaAsignada);
+
+  // Preparar el correo y abrir el cliente de email del usuario
+  const asunto = encodeURIComponent('Credenciales de acceso - Sistema Medi-Turnos');
+  const cuerpoMail = encodeURIComponent(
+    `Hola ${user},\n\n` +
+    `Se ha generado tu acceso al sistema con el rol: ${role.toUpperCase()}.\n\n` +
+    `🔗 Enlace de ingreso (Secretaría):\n${urlAcceso}\n\n` +
+    `Tus datos para iniciar sesión son:\n` +
+    `• DNI: ${dni}\n` +
+    `• Contraseña: ${pass}\n\n` +
+    `⚠️ IMPORTANTE: Por razones de seguridad, tu contraseña es temporal y caducará en 3 días (el ${vencimientoStr}).\n\n` +
+    `Saludos cordiales,\nAdministración Medi-Turnos`
+  );
+  
+  window.location.href = `mailto:${email}?subject=${asunto}&body=${cuerpoMail}`;
+
+  showToast(`Usuario guardado. Abriendo gestor de correo...`);
+  cerrarModalUsuario();
+}
+
+function abrirModalCargarObras() {
+  document.getElementById('archivoObras').value = '';
+  document.getElementById('modalCargarObras').classList.add('show');
+}
+
+function cerrarModalCargarObras() {
+  document.getElementById('modalCargarObras').classList.remove('show');
+}
+
+async function procesarArchivoObras() {
+  const input = document.getElementById('archivoObras');
+  if (!input.files || input.files.length === 0) {
+    showToast('Por favor, seleccioná un archivo CSV o TXT.');
+    return;
+  }
+
+  const file = input.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length === 0) {
+      showToast('El archivo está vacío.');
+      return;
+    }
+
+    let nuevasObras = [];
+    let startIndex = 0;
+    
+    // Ignorar la primera fila si detectamos que son los encabezados
+    if (lines[0].toLowerCase().includes('obra social') || lines[0].toLowerCase().includes('estado')) {
+      startIndex = 1;
+    }
+
+    for (let i = startIndex; i < lines.length; i++) {
+      // Permite procesar archivos delimitados por coma o punto y coma
+      let separador = lines[i].includes(';') ? ';' : ',';
+      let columnas = lines[i].split(separador).map(c => c.trim().replace(/^"|"$/g, '')); // Quita comillas si existen
+      
+      if (columnas.length >= 1) {
+        let cobertura = columnas[0];
+        let estado = columnas[1] || 'Activa';
+        let contacto = columnas[2] || '';
+        let telefono = columnas[3] || '';
+        let email = columnas[4] || '';
+        let web = columnas[5] || '';
+
+        if (cobertura) {
+          nuevasObras.push({
+            cobertura: cobertura,
+            estado: estado,
+            contacto: contacto,
+            telefono: telefono,
+            email: email,
+            web: web,
+            cosGral: '$0',
+            cosEspec: '$0',
+            cosPractica: '$0',
+            cosEstudio: '$0'
+          });
+        }
+      }
+    }
+
+    if (nuevasObras.length === 0) {
+      showToast('No se encontraron obras válidas para cargar.');
+      return;
+    }
+
+    try {
+      showToast('Sincronizando con el servidor...');
+      // 1. Descargamos la base de datos actual para no pisar nada
+      const response = await fetch('http://localhost:3000/api/datos');
+      const data = await response.json();
+      
+      let listaObras = data.obras || [];
+      let listaContactos = data.contactos || [];
+
+      let maxId = listaObras.length > 0 ? Math.max(...listaObras.map(o => Number(o.id) || 0)) : 0;
+      let maxContactoId = listaContactos.length > 0 ? Math.max(...listaContactos.map(c => Number(c.id) || 0)) : 0;
+
+      nuevasObras.forEach(no => {
+        maxId++;
+        listaObras.push({ id: maxId, ...no });
+
+        // 2. Guardamos automáticamente el registro en la agenda de contactos (tal cual lo hace secretaría)
+        let nombreContactoFinal = no.contacto || no.cobertura;
+        maxContactoId++;
+        listaContactos.push({
+          id: maxContactoId,
+          nombre: nombreContactoFinal,
+          rol: no.contacto ? 'Referente / Obra Social' : 'Obra Social',
+          empresa: no.cobertura,
+          telefono: no.telefono || '-',
+          whatsapp: no.telefono || '-',
+          email: no.email || '-'
+        });
+      });
+
+      data.obras = listaObras;
+      data.contactos = listaContactos;
+
+      // 3. Subimos los datos integrados nuevamente al JSON central
+      await fetch('http://localhost:3000/api/datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      showToast(`¡Éxito! Se cargaron ${nuevasObras.length} obras sociales.`);
+      cerrarModalCargarObras();
+
+    } catch (error) {
+      console.error(error);
+      showToast('Error al comunicar con el servidor Node.js (Puerto 3000).');
+    }
+  };
+  
+  reader.readAsText(file);
+}
+
+function sincronizarDevConfig() {
+  localStorage.setItem('medi_dev_config', JSON.stringify(devConfig));
+  showToast('Sincronizado con backend y vistas');
+}
+
+function resetearConfiguracion() {
+  localStorage.removeItem('medi_dev_config');
+  location.reload();
+}
+
+function cargarEstadosGuardados() {
+  const saved = JSON.parse(localStorage.getItem('medi_dev_config'));
+
+  // Listado actualizado con todos los módulos de pacientes, profesional y secretaría
+  const modulosKeys = [
+    'pac_turnos', 'pac_datos',
+    'prof_inicio', 'prof_pacientes', 'prof_obras', 'prof_turnos', 'prof_hc',
+    'prof_receta', 'prof_agenda_directo', 'prof_estadisticas', 'prof_actualizaciones', 'prof_contactos',
+    'sec_inicio', 'sec_pacientes', 'sec_obras', 'sec_turnos', 'sec_hc',
+    'sec_receta', 'sec_agenda_directo', 'sec_estadisticas', 'sec_actualizaciones', 'sec_contactos'
+  ];
+
+  if (saved) {
+    modulosKeys.forEach(modKey => {
+      const mainSwitch = document.getElementById(`main_${modKey}`);
+      if (mainSwitch && saved[`main_${modKey}`] !== undefined) {
+        mainSwitch.checked = saved[`main_${modKey}`];
+        toggleModuloMain(modKey);
+      }
+    });
+
+    Object.keys(saved).forEach(key => {
+      if (!key.startsWith('main_')) {
+        const chk = document.getElementById(key);
+        if (chk) {
+          chk.checked = saved[key];
+          devConfig[key] = saved[key];
+        }
+      }
+    });
+  }
+
+  syncDependenciaDetalle();
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// --- LÓGICA DE PERFIL DE USUARIO ---
+function obtenerUsuarioLocal() {
+  let u = localStorage.getItem('usuario_activo') || localStorage.getItem('usuarioLogueado') || localStorage.getItem('usuario');
+  if (!u) return { nombre: 'Administrador Master', rol: 'admin', documento: '-', password: '' };
+  try {
+    let obj = JSON.parse(u);
+    return typeof obj === 'object' ? obj : { nombre: obj, rol: 'admin', documento: '-', password: '' };
+  } catch(e) {
+    return { nombre: u, rol: 'admin', documento: '-', password: '' };
+  }
+}
+
+function guardarEnLocal(usuarioObj) {
+  localStorage.setItem('usuario_activo', JSON.stringify(usuarioObj));
+
+  let listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+  let index = listaUsuarios.findIndex(u => String(u.dni) === String(usuarioObj.dni));
+  if (index !== -1) {
+    listaUsuarios[index] = { ...listaUsuarios[index], ...usuarioObj };
+    listaUsuarios[index].usuario = usuarioObj.nombre || usuarioObj.usuario;
+    localStorage.setItem('medi_usuarios', JSON.stringify(listaUsuarios));
+  }
+}
+
+function inicializarPerfil() {
+  const usuario = obtenerUsuarioLocal();
+  const nombreEl = document.getElementById('nombreUsuarioRegistrado');
+  const rolEl = document.getElementById('rolUsuarioRegistrado');
+  const avatarEl = document.getElementById('avatarUsuarioRegistrado');
+  
+  let nombreMostrar = usuario.nombre || usuario.usuario || 'Admin';
+  
+  if (nombreEl) nombreEl.innerHTML = nombreMostrar + ' ▾';
+  if (rolEl) rolEl.textContent = 'Administrador Master';
+  
+  if (avatarEl && nombreMostrar) {
+    const partes = nombreMostrar.trim().split(' ');
+    let iniciales = partes[0].charAt(0).toUpperCase();
+    if (partes.length > 1) iniciales += partes[partes.length - 1].charAt(0).toUpperCase();
+    avatarEl.textContent = iniciales;
+  }
+}
+
+function toggleMenuPerfil() {
+  const menu = document.getElementById('menuPerfil');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function abrirModalPerfil() {
+  // Cerrar el menú desplegable
+  const menu = document.getElementById('menuPerfil');
+  if (menu) menu.style.display = 'none';
+
+  const usuario = obtenerUsuarioLocal();
+  
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  setVal('perfilNombre', usuario.nombre || usuario.usuario);
+  setVal('perfilRol', 'Administrador Master');
+  setVal('perfilDni', usuario.documento || usuario.dni || '-');
+  setVal('perfilTelefono', usuario.telefono);
+  setVal('perfilCorreo', usuario.email || usuario.correo);
+  
+  setVal('passActual', '');
+  setVal('passNueva', '');
+  setVal('passRepetir', '');
+
+  const seccionPass = document.getElementById('seccionPassword');
+  if (seccionPass) seccionPass.style.display = 'none';
+
+  // Forzar apertura correcta del modal
+  const modal = document.getElementById('modalPerfilUsuario');
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+  }
+}
+
+function cerrarModalPerfil() {
+  const modal = document.getElementById('modalPerfilUsuario');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+  }
+}
+
+// Control del Modo Oscuro
+function toggleModoOscuro() {
+  document.body.classList.toggle('dark-mode');
+  const esOscuro = document.body.classList.contains('dark-mode');
+  localStorage.setItem('medi_modo_oscuro', esOscuro ? 'enabled' : 'disabled');
+  showToast(esOscuro ? 'Modo oscuro activado' : 'Modo oscuro desactivado');
+}
+
+// Cargar estado de modo oscuro al iniciar la página
+if (localStorage.getItem('medi_modo_oscuro') === 'enabled') {
+  document.body.classList.add('dark-mode');
+}
+
+function guardarPerfil() {
+  let usuario = obtenerUsuarioLocal();
+  
+  usuario.nombre = document.getElementById('perfilNombre').value;
+  usuario.telefono = document.getElementById('perfilTelefono').value;
+  usuario.email = document.getElementById('perfilCorreo').value;
+  usuario.correo = document.getElementById('perfilCorreo').value;
+  
+  guardarEnLocal(usuario);
+  showToast('Datos personales actualizados exitosamente');
+  inicializarPerfil();
+  cerrarModalPerfil();
+}
+
+function cambiarPassword() {
+  let usuario = obtenerUsuarioLocal();
+  let actual = document.getElementById('passActual').value;
+  let nueva = document.getElementById('passNueva').value;
+  let repetir = document.getElementById('passRepetir').value;
+
+  if (!actual || !nueva || !repetir) {
+    alert('Por favor, completá todos los campos de contraseña.');
+    return;
+  }
+
+  let passGuardada = usuario.password || usuario.clave;
+  if (passGuardada && passGuardada !== actual) {
+    alert('La contraseña actual ingresada es incorrecta.');
+    return;
+  }
+
+  if (nueva !== repetir) {
+    alert('Las nuevas contraseñas no coinciden. Verificalas.');
+    return;
+  }
+
+  if (nueva.length < 4) {
+    alert('La nueva contraseña debe ser más larga.');
+    return;
+  }
+
+  usuario.password = nueva;
+  usuario.clave = nueva; 
+  
+  guardarEnLocal(usuario);
+  showToast('Contraseña actualizada correctamente');
+  
+  document.getElementById('passActual').value = '';
+  document.getElementById('passNueva').value = '';
+  document.getElementById('passRepetir').value = '';
+}
+
+function logout() { 
+  if(confirm('¿Cerrar sesión?')) {
+    localStorage.removeItem('usuario_activo');
+    localStorage.removeItem('usuarioLogueado');
+    localStorage.removeItem('usuario');
+    location.href = 'admin-login.html';   // o el nombre exacto de tu archivo de login admin
+  } 
+}
+
+// Cierra el menú si se hace clic afuera
+document.addEventListener('click', function(event) {
+  const menu = document.getElementById('menuPerfil');
+  const btn = document.getElementById('nombreUsuarioRegistrado');
+  if (menu && menu.style.display === 'block' && event.target !== btn && !menu.contains(event.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+inicializarPerfil();
+// -----------------------------------
+
+cargarEstadosGuardados();
+</script>
+</body>
+</html>
