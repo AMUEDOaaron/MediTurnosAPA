@@ -44,14 +44,14 @@
     {
       "id": 13,
       "usuario": "43064423",
-      "password": "hola123",
+      "password": "123456",
       "rol": "paciente",
       "nombre": "Aaron Amuedo",
       "dni": "43064423",
       "obra": "Particular",
       "telefono": "3756586866",
       "email": "",
-      "pass": "hola123"
+      "pass": "123456"
     },
     {
       "id": 14,
@@ -186,6 +186,42 @@
       "dni": "44567890",
       "obra": "OSDE",
       "telefono": "3412223344",
+      "email": ""
+    },
+    {
+      "id": 26,
+      "usuario": "11989442",
+      "password": "1234",
+      "pass": "1234",
+      "rol": "paciente",
+      "nombre": "Rodrigo Roleri",
+      "dni": "11989442",
+      "obra": "Particular",
+      "telefono": "3756586866",
+      "email": ""
+    },
+    {
+      "id": 27,
+      "usuario": "24873992",
+      "password": "1234",
+      "pass": "1234",
+      "rol": "paciente",
+      "nombre": "Tobias Obregon",
+      "dni": "24873992",
+      "obra": "Particular",
+      "telefono": "3756586866",
+      "email": ""
+    },
+    {
+      "id": 28,
+      "usuario": "29042752",
+      "password": "1234",
+      "pass": "1234",
+      "rol": "paciente",
+      "nombre": "Marcos Maidana",
+      "dni": "29042752",
+      "obra": "Particular",
+      "telefono": "3756586866",
       "email": ""
     }
   ],
@@ -511,6 +547,46 @@
       "motivo": "control de mancha",
       "estado": "Pendiente",
       "creado": "2026-10-28T23:29:13.454Z"
+    },
+    {
+      "id": 59,
+      "paciente": "Aarón Amuedo",
+      "profesional": "Dra. María González",
+      "fecha": "2026-11-26",
+      "hora": "09:00",
+      "motivo": "Mancha",
+      "estado": "Pendiente",
+      "creado": "2026-10-29T02:23:45.007Z"
+    },
+    {
+      "id": 60,
+      "paciente": "Aarón Amuedo",
+      "profesional": "Dra. María González",
+      "fecha": "2026-10-29",
+      "hora": "12:00",
+      "motivo": "control de mancha",
+      "estado": "Pendiente",
+      "creado": "2026-10-29T02:30:47.821Z"
+    },
+    {
+      "id": 61,
+      "paciente": "Rodrigo Roleri",
+      "profesional": "Dra. María González",
+      "fecha": "2026-11-26",
+      "hora": "17:30",
+      "motivo": "control de lunar",
+      "estado": "Cancelado",
+      "creado": "2026-10-29T02:38:58.670Z"
+    },
+    {
+      "id": 62,
+      "paciente": "Rodrigo Roleri",
+      "profesional": "Dra. María González",
+      "fecha": "2026-10-29",
+      "hora": "16:30",
+      "motivo": "control de mancha",
+      "estado": "Pendiente",
+      "creado": "2026-10-29T02:40:20.475Z"
     }
   ],
   "pacientes": [
@@ -634,7 +710,8 @@
       "dni": "43064423",
       "obra": "Particular",
       "telefono": "3756586866",
-      "estado": "Habilitado"
+      "estado": "Habilitado",
+      "email": "aaronamuedo2000@gmail.com"
     },
     {
       "id": 14,
@@ -858,6 +935,78 @@
       "cp": "937",
       "ciudad": "Alcorta",
       "provincia": "Santa Fe",
+      "pais": "Argentina"
+    },
+    {
+      "id": 26,
+      "nombre": "Rodrigo Roleri",
+      "dni": "11989442",
+      "obra": "Particular",
+      "telefono": "3756586866",
+      "estado": "Habilitado",
+      "apellido": "Roleri",
+      "tipoDoc": "DNI",
+      "numDoc": "11989442",
+      "cuil": "20119894429",
+      "sexo": "Masculino",
+      "fechaNacimiento": "1989-03-17",
+      "email": "aaronamuedo2000@gmail.com",
+      "obraSocial": "Particular",
+      "plan": "N/A",
+      "numAfiliado": "N/A",
+      "whatsapp": "3756586866",
+      "direccion": "salta 656",
+      "cp": "1111",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
+      "pais": "Argentina"
+    },
+    {
+      "id": 27,
+      "nombre": "Tobias Obregon",
+      "dni": "24873992",
+      "obra": "Particular",
+      "telefono": "3756586866",
+      "estado": "Habilitado",
+      "apellido": "Obregon",
+      "tipoDoc": "DNI",
+      "numDoc": "24873992",
+      "cuil": "20248739920",
+      "sexo": "Masculino",
+      "fechaNacimiento": "1991-06-30",
+      "email": "aaronamuedo2000@gmail.com",
+      "obraSocial": "Particular",
+      "plan": "N/A",
+      "numAfiliado": "N/A",
+      "whatsapp": "3756586866",
+      "direccion": "salta 656",
+      "cp": "1111",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
+      "pais": "Argentina"
+    },
+    {
+      "id": 28,
+      "nombre": "Marcos Maidana",
+      "dni": "29042752",
+      "obra": "Particular",
+      "telefono": "3756586866",
+      "estado": "Habilitado",
+      "apellido": "Maidana",
+      "tipoDoc": "DNI",
+      "numDoc": "29042752",
+      "cuil": "20290427520",
+      "sexo": "Masculino",
+      "fechaNacimiento": "2000-03-29",
+      "email": "aaronamuedo2000@gmail.com",
+      "obraSocial": "Particular",
+      "plan": "N/A",
+      "numAfiliado": "N/A",
+      "whatsapp": "3756586866",
+      "direccion": "salta 656",
+      "cp": "1111",
+      "ciudad": "Corrientes",
+      "provincia": "Corrientes",
       "pais": "Argentina"
     }
   ],

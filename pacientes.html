@@ -341,7 +341,7 @@
   }
   .slot-btn:hover:not(:disabled) { border-color: var(--green); background: var(--green-light); }
   .slot-btn.selected { background: var(--green); border-color: var(--green); color: white; }
- /* Estilo por defecto para deshabilitado (Modo Claro) */
+  
   .slot-btn:disabled {
     opacity: 0.65;
     cursor: not-allowed;
@@ -353,14 +353,13 @@
     border-color: #cbd5e1;
   }
 
-  /* Estilo específico para deshabilitado en Modo Oscuro */
   body.dark-mode .slot-btn:disabled {
     opacity: 0.85;
-    background: #331c24; /* Fondo rojizo suave oscuro */
-    color: #f87171;     /* Texto rojo claro legible */
+    background: #331c24;
+    color: #f87171;
     border-color: #7f1d1d;
     text-decoration: line-through;
-    text-decoration-color: #ef4444; /* Línea de tachado roja visible */
+    text-decoration-color: #ef4444;
     text-decoration-thickness: 2px;
   }
 
@@ -701,9 +700,10 @@
           <input type="text" id="regNumAfiliado" required placeholder="Nº de carnet">
         </div>
 
+        <!-- CAMBIO: Ahora el teléfono se puede editar en el modal -->
         <div class="modal-group">
           <label>Teléfono <span class="req">*</span></label>
-          <input type="tel" id="regTelefono" readonly style="opacity: 0.7; cursor: not-allowed;" title="Dato registrado previamente">
+          <input type="tel" id="regTelefono" required placeholder="Ej: 1122334455" oninput="sincronizarTelefonoModal()">
         </div>
 
         <div class="modal-group">
@@ -719,9 +719,10 @@
           <input type="text" id="regDireccion" required placeholder="Ej: Av. Santa Fe 1234, Piso 2 A">
         </div>
 
+        <!-- CAMBIO: Validación precisa de Código Postal Argentina -->
         <div class="modal-group">
           <label>Código Postal (CP) <span class="req">*</span></label>
-          <input type="text" id="regCp" required placeholder="Ej: C1059">
+          <input type="text" id="regCp" required placeholder="Ej: 3400 o W3400ABC" maxlength="8">
         </div>
 
         <div class="modal-group">
@@ -962,11 +963,11 @@
             <label>Tipo de consulta <span class="req">*</span></label>
             <select id="tipoConsulta" required>
               <option value="">Seleccioná...</option>
-              <option>Control</option>
-              <option>Primera consulta</option>
-              <option>Seguimiento</option>
-              <option>Urgencia / Prioritario</option>
-              <option>Otro</option>
+              <option value="Control">Control</option>
+              <option value="Primera consulta">Primera consulta</option>
+              <option value="Seguimiento">Seguimiento</option>
+              <option value="Urgencia / Prioritario">Urgencia / Prioritario</option>
+              <option value="Otro">Otro</option>
             </select>
           </div>
           <div class="form-group">
@@ -1001,7 +1002,7 @@
 
         <div class="form-group" style="margin-top:14px;">
           <label>Observaciones (opcional)</label>
-          <textarea id="observaciones" placeholder="Ej: traigo estudios previos..."></textarea>
+          <textarea id="observaciones" placeholder="Ej: traigo estudios previos, el lunar me duele..."></textarea>
         </div>
 
         <div class="form-actions">
@@ -1101,7 +1102,7 @@
           </div>
           <div class="form-group">
             <label>Código Postal (CP) <span class="req">*</span></label>
-            <input type="text" id="datoCp" required>
+            <input type="text" id="datoCp" required placeholder="Ej: 3400 o W3400ABC" maxlength="8">
           </div>
           <div class="form-group">
             <label>País <span class="req">*</span></label>
@@ -1287,6 +1288,16 @@
   }
 
   // ============================================================
+  // VALIDACIÓN DE CÓDIGO POSTAL (ARGENTINA)
+  // ============================================================
+  function validarCP(cp) {
+    const cpLimpio = cp.trim().toUpperCase();
+    // Expresión regular: 4 dígitos O formato CPA (1 letra, 4 números, 3 letras)
+    const regexCP = /^([0-9]{4}|[A-Z]{1}[0-9]{4}[A-Z]{3})$/;
+    return regexCP.test(cpLimpio);
+  }
+
+  // ============================================================
   // CONSUMO DE API OFICIAL DE PROVINCIAS Y LOCALIDADES (GEOREF AR)
   // ============================================================
   let cacheProvincias = [];
@@ -1392,7 +1403,7 @@
   let datosConfirmados = false;
   let turnosFuturos = [];
   let turnosAnteriores = [];
-  let todosLosTurnosGlobales = []; // Guarda la base completa del servidor para bloquear turnos duplicados
+  let todosLosTurnosGlobales = [];
 
   // ============================================================
   // COPIAR TELÉFONO A WHATSAPP
@@ -1402,7 +1413,7 @@
     const tel = document.getElementById('regTelefono').value;
     const whatsappInput = document.getElementById('regWhatsapp');
 
-    if (check.checked) {
+    if (check && check.checked) {
       whatsappInput.value = tel;
     }
   }
@@ -1419,7 +1430,7 @@
     const tel = document.getElementById('datoTelefono').value;
     const whatsappInput = document.getElementById('datoWhatsapp');
 
-    if (check.checked) {
+    if (check && check.checked) {
       whatsappInput.value = tel;
     }
   }
@@ -1528,6 +1539,7 @@
     paciente.nombre = usuarioActivo.nombre || 'Paciente';
     paciente.dni = dniActual || '';
     paciente.telefono = usuarioActivo.telefono || '';
+    paciente.email = usuarioActivo.email || '';
     paciente.obra = usuarioActivo.obra || 'Particular';
 
     const chipNombre = document.getElementById('chipNombre');
@@ -1589,11 +1601,18 @@
 
     const emailInput = document.getElementById('regEmail').value.trim();
     const dniInput = document.getElementById('regNumDoc').value.trim();
+    const cpInput = document.getElementById('regCp').value.trim();
 
     const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/;
     if (!regexEmail.test(emailInput)) {
       alert('Por favor ingresá un correo electrónico válido que incluya "@" y termine en ".com" (Ej: ejemplo@correo.com)');
       document.getElementById('regEmail').focus();
+      return;
+    }
+
+    if (!validarCP(cpInput)) {
+      alert('Por favor ingresá un código postal válido de Argentina (4 números o CPA formato W3400ABC).');
+      document.getElementById('regCp').focus();
       return;
     }
 
@@ -1612,7 +1631,7 @@
       telefono: document.getElementById('regTelefono').value.trim(),
       whatsapp: document.getElementById('regWhatsapp').value.trim(),
       direccion: document.getElementById('regDireccion').value.trim(),
-      cp: document.getElementById('regCp').value.trim(),
+      cp: cpInput,
       ciudad: document.getElementById('regCiudad').value,
       provincia: document.getElementById('regProvincia').value,
       pais: document.getElementById('regPais').value
@@ -1647,11 +1666,18 @@
 
     const emailInput = document.getElementById('datoEmail').value.trim();
     const dniInput = document.getElementById('datoNumDoc').value.trim();
+    const cpInput = document.getElementById('datoCp').value.trim();
 
     const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/;
     if (!regexEmail.test(emailInput)) {
       alert('Por favor ingresá un correo electrónico válido que incluya "@" y termine en ".com"');
       document.getElementById('datoEmail').focus();
+      return;
+    }
+
+    if (!validarCP(cpInput)) {
+      alert('Por favor ingresá un código postal válido de Argentina (4 números o CPA formato W3400ABC).');
+      document.getElementById('datoCp').focus();
       return;
     }
 
@@ -1670,7 +1696,7 @@
       telefono: document.getElementById('datoTelefono').value.trim(),
       whatsapp: document.getElementById('datoWhatsapp').value.trim(),
       direccion: document.getElementById('datoDireccion').value.trim(),
-      cp: document.getElementById('datoCp').value.trim(),
+      cp: cpInput,
       ciudad: document.getElementById('datoCiudad').value,
       provincia: document.getElementById('datoProvincia').value,
       pais: document.getElementById('datoPais').value
@@ -1724,6 +1750,7 @@
       paciente.nombre = `${datosGuardados.nombre} ${datosGuardados.apellido}`;
       paciente.dni = datosGuardados.numDoc || dniActual;
       paciente.telefono = datosGuardados.telefono || paciente.telefono;
+      paciente.email = datosGuardados.email || paciente.email;
       paciente.obra = datosGuardados.obraSocial || paciente.obra;
 
       nombreParaIniciales = datosGuardados.nombre || '';
@@ -1989,7 +2016,6 @@
         return new Date(fecha + 'T' + horaSegura);
       }
 
-      // Filtrar únicamente los turnos del paciente que está logueado
       const turnosDelPaciente = todosLosTurnosGlobales.filter(t => t.paciente === paciente.nombre);
 
       const turnosProcesados = turnosDelPaciente.map(t => {
@@ -2022,7 +2048,6 @@
       renderConfirmarTurno();
       renderProximoTurnoAbajo();
 
-      // Si hay una fecha seleccionada en el calendario, actualizar slots ocupados en vivo
       if (selectedDate) {
         renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
       }
@@ -2282,7 +2307,6 @@
   let selectedTime = null;
   const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30'];
 
-  // Obtiene los horarios ocupados reales consultando los turnos activos en el servidor
   function getBusySlots(dateStr) {
     if (!todosLosTurnosGlobales) return [];
 
@@ -2370,7 +2394,7 @@
   }
 
   // ============================================================
-  // ENVIAR SOLICITUD DE TURNO
+  // ENVIAR SOLICITUD DE TURNO (ENVÍA OBSERVACIONES Y TIPO)
   // ============================================================
   async function enviarSolicitud(e) {
     e.preventDefault();
@@ -2381,7 +2405,9 @@
 
     const fecha = document.getElementById('fechaElegida').value;
     const hora = document.getElementById('horaElegida').value;
+    const tipoConsulta = document.getElementById('tipoConsulta').value;
     const motivo = document.getElementById('motivo').value;
+    const observaciones = document.getElementById('observaciones').value.trim();
 
     if (!fecha || !hora) {
       showToast('Seleccioná un día y horario en el calendario');
@@ -2394,10 +2420,14 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paciente: paciente.nombre,
+          email: paciente.email || document.getElementById('datoEmail').value,
           profesional: 'Dra. María González',
           fecha: fecha,
           hora: hora,
-          motivo: motivo
+          tipoEvento: tipoConsulta,
+          motivo: motivo,
+          observaciones: observaciones,
+          obra: paciente.obra
         })
       });
 
