@@ -152,10 +152,79 @@ function loadDB() {
 }
 
 function saveDB(dbData) {
+  // Cada guardado sube la versión: así secretaría y profesional detectan cambios
+  dbData.version = (Number(dbData.version) || 0) + 1;
+  dbData.ultimaActualizacion = new Date().toISOString();
   fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), 'utf8');
 }
 
 let db = loadDB();
+
+// ========== CONFIGURACIÓN DE AGENDA COMPARTIDA (ACTUALIZACIONES) ==========
+// Valores por defecto: los mismos que usan secretaria.html y profesionales.html
+const DEFAULT_CONFIG_TURNOS = {
+  'Primera consulta': 30,
+  'Control': 15,
+  'Seguimiento': 15,
+  'Urgencia/Prioritario': 20,
+  'Práctica': 45,
+  'Cirugía': 120,
+  'Otros': 30
+};
+const DEFAULT_CONFIG_MOTIVOS = ['Control general', 'Primera vez', 'Urgencia', 'Receta', 'Otro'];
+const DEFAULT_CONFIG_AGENDA = {
+  1: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '19:00' }],
+  2: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '19:00' }],
+  3: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '19:00' }],
+  4: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '19:00' }],
+  5: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '19:00' }],
+  6: [],
+  0: []
+};
+
+function obtenerConfigTurnos() {
+  return (db.configTurnos && Object.keys(db.configTurnos).length) ? db.configTurnos : DEFAULT_CONFIG_TURNOS;
+}
+function obtenerConfigMotivos() {
+  return (Array.isArray(db.configMotivos) && db.configMotivos.length) ? db.configMotivos : DEFAULT_CONFIG_MOTIVOS;
+}
+function obtenerConfigAgenda() {
+  return (db.configAgenda && Object.keys(db.configAgenda).length) ? db.configAgenda : DEFAULT_CONFIG_AGENDA;
+}
+
+function horaAMinutos(h) {
+  if (!h) return 0;
+  const [hh, mm] = String(h).split(':').map(Number);
+  return (hh || 0) * 60 + (mm || 0);
+}
+function minutosAHora(m) {
+  return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+}
+function fechaLocalServidor(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function lunesDeLaSemana(fechaStr) {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const dia = dt.getDay();
+  dt.setDate(dt.getDate() - dia + (dia === 0 ? -6 : 1));
+  return fechaLocalServidor(dt);
+}
+// Igual que getAgendaForDate() del front: primero la semana puntual, si no la agenda estándar
+function agendaParaFecha(fechaStr) {
+  const semanas = db.configAgendaSemanas || {};
+  return semanas[lunesDeLaSemana(fechaStr)] || obtenerConfigAgenda();
+}
+// Cancelado / Finalizado / Atendido liberan el horario (misma regla que secretaría)
+function estadoOcupaHorario(estado) {
+  const e = String(estado || '').toLowerCase().trim();
+  return e !== 'cancelado' && e !== 'finalizado' && e !== 'atendido';
+}
+function seSuperpone(t, inicio, fin) {
+  const s = horaAMinutos(t.hora);
+  const e = t.horaHasta ? horaAMinutos(t.horaHasta) : s + 30;
+  return inicio < e && s < fin;
+}
 
 // ========== RUTAS API PARA ARCHIVOS Y DATOS ==========
 
@@ -174,8 +243,35 @@ app.get('/api/datos', (req, res) => {
   res.json(db);
 });
 
+// Versión actual de los datos (consulta liviana para la sincronización automática)
+app.get('/api/version', (req, res) => {
+  res.json({ version: Number(db.version) || 0 });
+});
+
+// Permisos configurados en permisos.html (los leen pacientes, secretaría y profesional)
+app.get('/api/permisos', (req, res) => {
+  res.json(db.permisos || {});
+});
+
+// ¿El portal del paciente tiene habilitada esta función?
+function permisoPaciente(clave) {
+  const p = db.permisos || {};
+  if (clave.startsWith('pac_turnos_') && p.main_pac_turnos === false) return false;
+  if (clave.startsWith('pac_datos_') && p.main_pac_datos === false) return false;
+  return p[clave] !== false;
+}
+
 app.post('/api/datos', (req, res) => {
-  const { pacientes, turnos, obras, hc, contactos, usuarios } = req.body;
+  const { pacientes, turnos, obras, hc, contactos, usuarios, configMotivos, configTurnos, configAgenda, configAgendaSemanas, permisos } = req.body;
+
+  // Permisos de la consola master (permisos.html)
+  if (permisos && typeof permisos === 'object' && !Array.isArray(permisos)) db.permisos = permisos;
+
+  // Configuración compartida (pestaña ACTUALIZACIONES)
+  if (Array.isArray(configMotivos)) db.configMotivos = configMotivos;
+  if (configTurnos && typeof configTurnos === 'object') db.configTurnos = configTurnos;
+  if (configAgenda && typeof configAgenda === 'object') db.configAgenda = configAgenda;
+  if (configAgendaSemanas && typeof configAgendaSemanas === 'object') db.configAgendaSemanas = configAgendaSemanas;
   
   if (pacientes) db.pacientes = pacientes;
   if (turnos) db.turnos = turnos;
@@ -207,7 +303,7 @@ app.post('/api/datos', (req, res) => {
   }
 
   saveDB(db);
-  res.json({ success: true, message: 'Datos guardados correctamente' });
+  res.json({ success: true, message: 'Datos guardados correctamente', version: db.version });
 });
 
 // ========== RUTAS API TRADICIONALES ==========
@@ -252,6 +348,10 @@ app.post('/api/pacientes/login', handleLogin);
 // CAMBIAR CONTRASEÑA DE PACIENTES
 app.post('/api/pacientes/cambiar-password', (req, res) => {
   const { dni, passActual, passNueva } = req.body;
+
+  if (!permisoPaciente('main_pac_password')) {
+    return res.status(403).json({ mensaje: 'El cambio de contraseña no está habilitado.' });
+  }
 
   if (!dni || !passActual || !passNueva) {
     return res.status(400).json({ mensaje: 'Todos los campos son obligatorios.' });
@@ -441,27 +541,91 @@ app.get('/api/turnos', (req, res) => {
   res.json(db.turnos);
 });
 
+// DISPONIBILIDAD PARA EL PORTAL DEL PACIENTE (config de Actualizaciones + horarios ocupados, sin datos personales)
+app.get('/api/disponibilidad', (req, res) => {
+  db = loadDB();
+  res.json({
+    version: Number(db.version) || 0,
+    configTurnos: obtenerConfigTurnos(),
+    configMotivos: obtenerConfigMotivos(),
+    configAgenda: obtenerConfigAgenda(),
+    configAgendaSemanas: db.configAgendaSemanas || {},
+    ocupados: (db.turnos || [])
+      .filter(t => estadoOcupaHorario(t.estado))
+      .map(t => ({
+        fecha: t.fecha,
+        hora: t.hora,
+        horaHasta: t.horaHasta || '',
+        motivo: t.motivo === 'Día Bloqueado' ? 'Día Bloqueado' : ''
+      }))
+  });
+});
+
 // CREAR TURNO Y ENVIAR NOTIFICACIONES
 app.post('/api/turnos', async (req, res) => {
   console.log('\n=============================================');
   console.log('📩 [PETICIÓN DE TURNO RECIBIDA IN]');
   console.log('Datos en req.body:', req.body);
   
-  // Extraemos únicamente el email, ya no usamos telegram_chat_id
-  const { paciente, profesional, fecha, hora, motivo, email } = req.body;
+  const { paciente, profesional, fecha, hora, motivo, email, tipoConsulta, observaciones, obra, dni } = req.body;
 
-  if (!paciente || !fecha || !hora) {
-    console.log('❌ Error: Faltan datos obligatorios (paciente, fecha u hora)');
-    return res.status(400).json({ mensaje: 'Faltan datos del turno' });
+  if (!permisoPaciente('pac_turnos_agregar')) {
+    return res.status(403).json({ ok: false, mensaje: 'La solicitud de turnos online no está habilitada en este momento.' });
+  }
+
+  if (!paciente || !fecha || !hora || !tipoConsulta || !motivo) {
+    console.log('❌ Error: Faltan datos obligatorios');
+    return res.status(400).json({ ok: false, mensaje: 'Faltan datos del turno (fecha, hora, tipo de consulta o motivo).' });
+  }
+
+  // 1. Tipo y motivo deben ser los cargados en ACTUALIZACIONES
+  const configTurnos = obtenerConfigTurnos();
+  if (configTurnos[tipoConsulta] === undefined) {
+    return res.status(400).json({ ok: false, mensaje: 'El tipo de consulta elegido ya no está disponible.' });
+  }
+  if (!obtenerConfigMotivos().includes(motivo)) {
+    return res.status(400).json({ ok: false, mensaje: 'El motivo de consulta elegido ya no está disponible.' });
+  }
+
+  // 2. No se permiten fechas u horarios pasados
+  const ahora = new Date();
+  const hoy = fechaLocalServidor(ahora);
+  const inicio = horaAMinutos(hora);
+  const duracion = Number(configTurnos[tipoConsulta]) || 30;
+  const fin = inicio + duracion;
+  if (fecha < hoy || (fecha === hoy && inicio <= ahora.getHours() * 60 + ahora.getMinutes())) {
+    return res.status(400).json({ ok: false, mensaje: 'No se pueden pedir turnos en fechas u horarios pasados.' });
+  }
+
+  // 3. Debe caer dentro de los días y horarios de atención configurados
+  const diaSemana = new Date(fecha + 'T00:00:00').getDay();
+  const rangos = agendaParaFecha(fecha)[diaSemana] || [];
+  const dentroDeAgenda = rangos.some(r => inicio >= horaAMinutos(r.start) && fin <= horaAMinutos(r.end));
+  if (!dentroDeAgenda) {
+    return res.status(409).json({ ok: false, mensaje: 'El consultorio no atiende en ese día u horario.' });
+  }
+
+  // 4. No puede superponerse con otro turno ni con un día bloqueado (de cualquier pantalla)
+  const ocupado = db.turnos.some(t => t.fecha === fecha && estadoOcupaHorario(t.estado) && seSuperpone(t, inicio, fin));
+  if (ocupado) {
+    return res.status(409).json({ ok: false, mensaje: 'Ese horario acaba de ser reservado. Elegí otro horario libre.' });
   }
 
   const nuevoTurno = {
-    id: db.turnos.length ? Math.max(...db.turnos.map(t => t.id)) + 1 : 1,
-    paciente,
-    profesional: profesional || 'Dra. María González',
+    id: db.turnos.length ? Math.max(...db.turnos.map(t => Number(t.id) || 0)) + 1 : 1,
     fecha,
     hora,
-    motivo: motivo || 'Consulta',
+    horaHasta: minutosAHora(fin),
+    paciente,
+    dni: dni || '',
+    obra: obra || 'Particular',
+    profesional: profesional || 'Dra. María González',
+    tipoEvento: 'Consulta',
+    tipoConsulta,
+    motivoPaciente: motivo,
+    motivo: `${motivo} (${tipoConsulta})`, // mismo formato que usan secretaría y profesional
+    observaciones: String(observaciones || '').replace(/[<>]/g, '').trim().slice(0, 500),
+    medioSolicitud: 'Web',
     estado: 'Pendiente',
     creado: new Date().toISOString()
   };
@@ -516,6 +680,7 @@ app.post('/api/turnos', async (req, res) => {
                    <li><strong>Fecha:</strong> ${fecha}</li>
                    <li><strong>Hora:</strong> ${hora} hs</li>
                    <li><strong>Motivo:</strong> ${nuevoTurno.motivo}</li>
+                   <li><strong>Observaciones del paciente:</strong> ${nuevoTurno.observaciones || '-'}</li>
                  </ul>
                  <p>El turno ya figura como <strong>Pendiente</strong> en la base de datos.</p>
                </div>`
@@ -528,12 +693,16 @@ app.post('/api/turnos', async (req, res) => {
   }
 
   console.log('=============================================\n');
-  res.status(201).json({ ...nuevoTurno, notificaciones });
+  res.status(201).json({ ok: true, ...nuevoTurno, notificaciones });
 });
 
 // CANCELAR TURNO
 app.post('/api/turnos/cancelar', (req, res) => {
   const { fecha, hora, paciente } = req.body;
+
+  if (!permisoPaciente('pac_turnos_eliminar') && !permisoPaciente('pac_turnos_editar')) {
+    return res.status(403).json({ ok: false, mensaje: 'La cancelación de turnos online no está habilitada.' });
+  }
   const index = db.turnos.findIndex(t => t.fecha === fecha && t.hora === hora && t.paciente === paciente);
   if (index !== -1) {
     db.turnos[index].estado = 'Cancelado';
@@ -565,7 +734,7 @@ app.delete('/api/hc/limpiar-todas', (req, res) => {
 
 // LISTAR USUARIOS
 app.get('/api/usuarios', (req, res) => {
-  const usuariosSinPass = db.usuarios.map(({ password, pass, ...u }) => u);
+  const usuariosSinPass = db.usuarios.map(({ password, pass, clave, tempPassword, tempPasswordExpires, ...u }) => u);
   res.json(usuariosSinPass);
 });
 

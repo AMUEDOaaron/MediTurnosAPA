@@ -783,6 +783,77 @@ body.tema-noche #btnTemaNoche:hover {
     print-color-adjust: exact !important;
   }
 }
+/* ===== CABECERA Y BOTONES: ESTILO MÁS PROFESIONAL ===== */
+.quick-access { gap: 4px; align-items: center; }
+.quick-access button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  letter-spacing: 0.2px;
+}
+.quick-access button:hover {
+  background: var(--red-light);
+  color: var(--red);
+  border-color: transparent;
+}
+.quick-access button.active-quick {
+  background: var(--red-light);
+  color: var(--red);
+  border-color: var(--border);
+}
+body.tema-noche .quick-access button { background: transparent; border-color: transparent; color: var(--text-soft); }
+body.tema-noche .quick-access button:hover,
+body.tema-noche .quick-access button.active-quick { background: rgba(255,255,255,0.06); color: var(--red); border-color: var(--border); }
+
+#btnTemaNoche,
+body.tema-noche #btnTemaNoche {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  opacity: 0.75;
+}
+#btnTemaNoche:hover { background: var(--red-light); color: var(--red); border-color: var(--border); opacity: 1; }
+body.tema-noche #btnTemaNoche:hover { background: rgba(255,255,255,0.08); color: #fbbf24; opacity: 1; }
+
+.perfil-trigger { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 8px 4px 4px; border-radius: 10px; transition: background .15s; user-select: none; }
+.perfil-trigger:hover { background: var(--red-light); }
+body.tema-noche .perfil-trigger:hover { background: rgba(255,255,255,0.06); }
+.perfil-trigger-texto { display: flex; flex-direction: column; line-height: 1.2; }
+.perfil-trigger-texto strong { font-size: 13px; color: var(--text); }
+.perfil-trigger-texto small { font-size: 11px; color: var(--text-soft); }
+.perfil-chevron { font-size: 11px; color: var(--text-soft); }
+
+.perfil-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.14); z-index: 1000; overflow: hidden; }
+.perfil-menu-header { padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--red-soft); }
+.perfil-menu-header strong { display: block; font-size: 14px; color: var(--text); }
+.perfil-menu-header small { font-size: 12px; color: var(--text-soft); }
+.perfil-menu-item { display: block; width: 100%; text-align: left; padding: 10px 14px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); font-family: inherit; }
+.perfil-menu-item:hover { background: var(--red-light); color: var(--red); }
+.perfil-menu-salir { color: #dc2626; border-top: 1px solid var(--border); }
+.perfil-menu-salir:hover { background: #fef2f2; color: #b91c1c; }
+body.tema-noche .perfil-menu { background: #1a1a22; }
+body.tema-noche .perfil-menu-header { background: #121218; }
+body.tema-noche .perfil-menu-item:hover { background: rgba(255,255,255,0.06); }
+body.tema-noche .perfil-menu-salir { color: #f87171; }
+
+.btn, .btn-action { transition: background-color .15s, box-shadow .15s, transform .15s, border-color .15s, color .15s; }
+.btn { border-radius: 8px; letter-spacing: 0.2px; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.10); }
+.btn:active, .btn-action:active { transform: translateY(0); box-shadow: none; }
+.btn-action { border-radius: 8px; }
+.btn-action:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  .perfil-trigger-texto, .perfil-chevron { display: none; }
+}
 </style>
 </head>
 <body>
@@ -804,29 +875,37 @@ body.tema-noche #btnTemaNoche:hover {
     <header class="topbar-prof">
       <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
       <div>
-        <div class="eyebrow" style="font-size: 18px; font-weight: 700; color: #dc2626; letter-spacing: 0.5px;">ÁREA PROFECIONAL</div>
+        <div class="eyebrow" style="font-size: 18px; font-weight: 700; color: #dc2626; letter-spacing: 0.5px;">ÁREA PROFESIONAL</div>
         <h1 id="pageTitle" style="display: none;">Inicio</h1>
       </div>
       <div class="quick-access">
-        <button class="active-quick" data-section="inicio" onclick="changeSection('inicio')">INICIO</button>
-        <button data-section="contactos" onclick="changeSection('contactos')">CONTACTOS</button>
-        <button data-section="actualizaciones" onclick="changeSection('actualizaciones')">ACTUALIZACIONES</button>
-        <!-- BOTÓN ACTUALIZADO CON PARÁMETRO ORIGEN=ADMIN -->
-        <button onclick="window.location.href='agenda.html?origen=prof'">AGENDA</button>
-        <button data-section="estadisticas" onclick="window.location.href='estadisticas.html?origen=profecionales'">ESTADISTICAS</button>
+        <button class="active-quick" data-section="inicio" onclick="changeSection('inicio')">Inicio</button>
+        <button data-section="contactos" onclick="changeSection('contactos')">Contactos</button>
+        <button data-section="actualizaciones" onclick="changeSection('actualizaciones')">Actualizaciones</button>
+        <button onclick="window.location.href='agenda.html?origen=prof'">Agenda</button>
+        <button data-section="estadisticas" onclick="window.location.href='estadisticas.html?origen=profecionales'">Estadísticas</button>
       </div>
-      <button type="button" id="btnTemaNoche" onclick="toggleTemaNoche()" title="Cambiar modo día / noche">🌙</button>
-            <div class="doctor-box" style="position:relative;">
-        <div class="doctor-avatar" style="background:#e0f2fe; color:#0369a1;" id="avatarUsuarioRegistrado">PR</div>
-        <div>
-          <strong id="nombreUsuarioRegistrado" style="cursor:pointer;" onclick="toggleMenuPerfil()">Profesional ▾</strong>
-          <small id="rolUsuarioRegistrado">Área Profesional</small>
+      <button type="button" id="btnTemaNoche" onclick="toggleTemaNoche()" title="Cambiar modo día / noche" aria-label="Cambiar modo día / noche">🌙</button>
+      <div class="doctor-box" style="position:relative;">
+        <div id="perfilTrigger" class="perfil-trigger" onclick="toggleMenuPerfil()" role="button" tabindex="0" aria-haspopup="true" title="Opciones de usuario"
+             onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleMenuPerfil(); }">
+          <div class="doctor-avatar" style="background:#e0f2fe; color:#0369a1;" id="avatarUsuarioRegistrado">--</div>
+          <div class="perfil-trigger-texto">
+            <strong id="nombreUsuarioRegistrado">Cargando...</strong>
+            <small id="rolUsuarioRegistrado">Área Profesional</small>
+          </div>
+          <span class="perfil-chevron">▾</span>
         </div>
 
         <!-- Menú desplegable -->
-        <div id="menuPerfil" style="display:none; position:absolute; top:100%; right:0; background:#fff; border:1px solid #bae6fd; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,0.12); min-width:180px; z-index:1000; overflow:hidden; margin-top:6px;">
-          <button onclick="abrirModalPerfil()" style="width:100%; text-align:left; padding:10px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#0c4a6e;">👤 Ver / Editar Perfil</button>
-          <button onclick="logout()" style="width:100%; text-align:left; padding:10px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#dc2626; border-top:1px solid #e2e8f0;">↪ Cerrar sesión</button>
+        <div id="menuPerfil" class="perfil-menu" style="display:none;">
+          <div class="perfil-menu-header">
+            <strong id="menuNombreUsuario">—</strong>
+            <small id="menuRolUsuario">—</small>
+          </div>
+          <button type="button" class="perfil-menu-item" onclick="abrirModalPerfil()">👤 Mis datos personales</button>
+          <button type="button" class="perfil-menu-item" onclick="abrirCambioPassword()">🔒 Cambiar contraseña</button>
+          <button type="button" class="perfil-menu-item perfil-menu-salir" onclick="logout()">↪ Cerrar sesión</button>
         </div>
       </div>
     </header>
@@ -1480,21 +1559,96 @@ body.tema-noche #btnTemaNoche:hover {
   let secSelectedTime = null;
   let secSelectedTimeHasta = null;
 
+  window.versionDatos = 0;
+  window.contadorGuardados = 0;
+  window.guardandoDatos = false;
+  window.formTiemposSucio = false;
+  window.formAgendaSucio = false;
+
+  // Aplica en memoria (y en localStorage) lo que viene del servidor
+  function aplicarDatosServidor(data) {
+    window.listaPacientes = data.pacientes || [];
+    window.listaObras = data.obras || [];
+    window.listaTurnosGeneral = data.turnos || [];
+    window.listaHC = data.hc || [];
+    window.listaContactos = data.contactos || [];
+
+    // Configuración compartida (prioridad servidor, fallback localStorage)
+    if (Array.isArray(data.configMotivos) && data.configMotivos.length > 0) {
+      window.configMotivos = data.configMotivos;
+      localStorage.setItem('medi_configMotivos', JSON.stringify(window.configMotivos));
+    }
+    if (data.configTurnos && typeof data.configTurnos === 'object' && Object.keys(data.configTurnos).length > 0) {
+      window.configTurnos = data.configTurnos;
+      localStorage.setItem('medi_configTurnos', JSON.stringify(window.configTurnos));
+    }
+    if (data.configAgenda && typeof data.configAgenda === 'object' && Object.keys(data.configAgenda).length > 0) {
+      window.configAgenda = data.configAgenda;
+      localStorage.setItem('medi_configAgenda', JSON.stringify(window.configAgenda));
+    }
+    if (data.configAgendaSemanas && typeof data.configAgendaSemanas === 'object') {
+      window.configAgendaSemanas = data.configAgendaSemanas;
+      localStorage.setItem('medi_configAgendaSemanas', JSON.stringify(window.configAgendaSemanas));
+    }
+
+    if (typeof data.version === 'number') window.versionDatos = data.version;
+  }
+
+  // Vuelve a dibujar lo que el usuario está mirando, sin cerrar modales ni perder filtros
+  function refrescarVistaActual() {
+    const subSel = document.getElementById('newSubTipoConsulta');
+    const motSel = document.getElementById('newMotivoSelect');
+    const prevSub = subSel ? subSel.value : '';
+    const prevMot = motSel ? motSel.value : '';
+    actualizarSelectSubtiposModal();
+    actualizarSelectMotivos();
+    if (subSel && prevSub && Array.from(subSel.options).some(o => o.value === prevSub)) subSel.value = prevSub;
+    if (motSel && prevMot && Array.from(motSel.options).some(o => o.value === prevMot)) motSel.value = prevMot;
+
+    cargarAgendaProfesional();
+    renderMonthlyCalendar();
+
+    // Si el modal de nuevo turno está abierto, refrescamos el calendario y los horarios libres
+    const modalTurno = document.getElementById('modal');
+    if (modalTurno && modalTurno.classList.contains('show')) {
+      secRenderCalendar();
+      if (secSelectedDate && document.getElementById('newTipoEvento').value === 'Consulta') {
+        secRenderSlots(secSelectedDate, parseInt(secSelectedDate.split('-')[2], 10));
+      }
+    }
+
+    if (seccionActual === 'pacientes' && document.getElementById('tbodyPacientes')) {
+      const pag = window.paginaActual || 1;
+      filtrarTabla();
+      const totalPag = Math.ceil(window.pacientesFiltrados.length / window.pageSize) || 1;
+      window.paginaActual = Math.min(pag, totalPag);
+      renderTablaPacientes();
+    } else if (seccionActual === 'obras' && document.getElementById('tbodyObras')) {
+      filtrarTablaObras();
+    } else if (seccionActual === 'turnos' && document.getElementById('tbodyTurnosGeneral')) {
+      const pag = window.paginaActualTurnos || 1;
+      filtrarTablaTurnos();
+      const totalPag = Math.ceil(window.turnosFiltrados.length / window.pageSizeTurnos) || 1;
+      window.paginaActualTurnos = Math.min(pag, totalPag);
+      renderTablaTurnosGeneral();
+    } else if (seccionActual === 'contactos' && document.getElementById('tbodyContactos')) {
+      window.contactosFiltrados = [...window.listaContactos];
+      renderTablaContactos();
+    } else if (seccionActual === 'historial') {
+      const r = document.getElementById('resultadosHC');
+      if (r && r.innerHTML.includes('<table')) ejecutarBusquedaHC();
+    } else if (seccionActual === 'actualizaciones') {
+      // No pisar un formulario que el usuario está editando
+      if (!window.formTiemposSucio && !window.formAgendaSucio) llenarFormularioActualizaciones();
+    }
+  }
+
   async function cargarDatosServidor() {
     try {
       const response = await fetch('http://localhost:3000/api/datos');
       const data = await response.json();
-      
-      window.listaPacientes = data.pacientes || [];
-      window.listaObras = data.obras || [];
-      window.listaTurnosGeneral = data.turnos || [];
-      window.listaHC = data.hc || [];
-      // Motivos configurados en Actualizaciones (prioridad servidor, fallback localStorage)
-      if (Array.isArray(data.configMotivos) && data.configMotivos.length > 0) {
-        window.configMotivos = data.configMotivos;
-        localStorage.setItem('medi_configMotivos', JSON.stringify(window.configMotivos));
-      }
-      window.listaContactos = data.contactos || [];
+
+      aplicarDatosServidor(data);
 
       if (window.listaPacientes.length === 0) {
         window.listaPacientes = [
@@ -1591,6 +1745,8 @@ body.tema-noche #btnTemaNoche:hover {
   }
 
   async function guardarDatosServidor() {
+    window.guardandoDatos = true;
+    window.contadorGuardados++;
     try {
       const response = await fetch('http://localhost:3000/api/datos', {
         method: 'POST',
@@ -1601,16 +1757,25 @@ body.tema-noche #btnTemaNoche:hover {
           obras: window.listaObras,
           hc: hcSinArchivosBase64(window.listaHC),
           contactos: window.listaContactos,
-          configMotivos: window.configMotivos || []
+          configMotivos: window.configMotivos || [],
+          configTurnos: window.configTurnos || {},
+          configAgenda: window.configAgenda || {},
+          configAgendaSemanas: window.configAgendaSemanas || {}
         })
       });
       if (!response.ok) {
         console.error('Error al guardar en servidor:', response.status);
         showToast('Error al guardar en el servidor');
+      } else {
+        const r = await response.json();
+        // Guardamos la versión nueva para no recargar nuestro propio cambio
+        if (typeof r.version === 'number') window.versionDatos = r.version;
       }
     } catch (error) {
       console.error("Error al sincronizar con el servidor:", error);
       showToast('Error de conexión al guardar');
+    } finally {
+      window.guardandoDatos = false;
     }
   }
 
@@ -2060,23 +2225,7 @@ body.tema-noche #btnTemaNoche:hover {
 
   function renderizarTurnos() {
     const container = document.getElementById('appointments');
-    if (!container) return `
-        <div class="${rowClass}" style="${estiloFilaInicio}">
-          <div style="font-weight:700; color:#dc2626; width:90px;">
-            ${t.hora || '10:00'}<br>
-            <span style="font-size:11px; font-weight:400; color:#6b5a5a;">a ${t.horaHasta || '-'}</span>
-          </div>
-          <div style="flex:1; padding-left:10px; min-width:140px;">
-            <strong>${t.paciente || t.motivo || 'Sin nombre'}</strong>
-            <div style="font-size:12px; color:#0c4a6e; font-weight:600; margin-top:2px;">
-              📋 <strong>Tipo:</strong> ${t.tipoEvento || 'Consulta'} | 💬 <strong>Motivo:</strong> ${t.motivo || 'No especificado'}
-            </div>
-            ${t.observaciones ? `<div style="font-size:11px; color:#dc2626; background:#fff5f5; border:1px solid #fecaca; border-radius:4px; padding:3px 6px; margin-top:4px;">📝 <strong>Observaciones del paciente:</strong> ${t.observaciones}</div>` : ''}
-            <div style="font-size:11px; color:#6b5a5a; opacity:0.85; margin-top:2px;"><em>Estado: ${etiquetaTiempo}</em></div>
-          </div>
-          <span class="badge ${claseBadge}" style="margin-right:8px;">${t.estado || 'Pendiente'}</span>
-          <div style="display:flex; flex-wrap:wrap; gap:4px;">${botonesAccion || '-'}</div>
-        </div>`;
+    if (!container) return;
 
     if (listaTurnosLocal.length === 0) {
       container.innerHTML = `<p style="padding:15px; color:#6b5a5a;">No hay eventos ni turnos registrados para hoy.</p>`;
@@ -2168,6 +2317,8 @@ body.tema-noche #btnTemaNoche:hover {
           <div style="flex:1; padding-left:10px; min-width:140px;">
             <strong>${t.paciente || t.motivo || 'Sin nombre'}</strong>
             <div style="font-size:12px; color:#6b5a5a; opacity:0.85;">[${t.tipoEvento || 'Consulta'}] ${t.motivo || ''} · <em>${etiquetaTiempo}</em></div>
+            ${t.medioSolicitud === 'Web' ? `<div style="font-size:11px; color:#0369a1; font-weight:600; margin-top:2px;">🌐 Pedido por el paciente desde la web</div>` : ''}
+            ${t.observaciones ? `<div style="font-size:11px; color:#991b1b; background:#fff5f5; border:1px solid #fecaca; border-radius:4px; padding:3px 6px; margin-top:4px;">📝 <strong>Observaciones del paciente:</strong> ${t.observaciones}</div>` : ''}
           </div>
           <span class="badge ${claseBadge}" style="margin-right:8px;">${t.estado || 'Pendiente'}</span>
           <div style="display:flex; flex-wrap:wrap; gap:4px;">${botonesAccion || '-'}</div>
@@ -2240,6 +2391,7 @@ body.tema-noche #btnTemaNoche:hover {
       <p><strong>Obra Social:</strong> ${t.obra || 'Particular'}</p>
       <p><strong>Descripción / Motivo:</strong> ${t.motivo || '-'}</p>
       <p><strong>Medio de solicitud:</strong> ${t.medioSolicitud || '-'}</p>
+      <p><strong>Observaciones del paciente:</strong> ${t.observaciones || '-'}</p>
       <p><strong>Estado:</strong> ${t.estado || 'Pendiente'}</p>
       <div style="margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
         <span style="font-size: 13px; color: var(--text-soft);">Sincronización oficial:</span>
@@ -2553,6 +2705,8 @@ body.tema-noche #btnTemaNoche:hover {
 
   function changeSection(section) {
     seccionActual = section;
+    window.formTiemposSucio = false;
+    window.formAgendaSucio = false;
     document.querySelectorAll('.side-item').forEach(x => x.classList.remove('active'));
     document.querySelectorAll('.quick-access button').forEach(x => x.classList.remove('active-quick'));
     const activeSideBtn = document.querySelector(`.side-item[data-section="${section}"]`);
@@ -2751,18 +2905,20 @@ body.tema-noche #btnTemaNoche:hover {
       container.appendChild(div);
   }
 
-  function guardarConfigTurnos() {
+  async function guardarConfigTurnos() {
       for(const tipo of Object.keys(window.configTurnos)) {
           let id = 'conf_turno_' + tipo.replace(/\s|\/|í|ú|á/g, '_');
           let val = parseInt(document.getElementById(id).value) || 30;
           window.configTurnos[tipo] = val;
       }
       localStorage.setItem('medi_configTurnos', JSON.stringify(window.configTurnos));
-      showToast('Tiempos de consulta guardados');
+      window.formTiemposSucio = false;
+      await guardarDatosServidor();
+      showToast('Tiempos de consulta guardados y sincronizados');
       actualizarSelectSubtiposModal();
   }
 
-  function guardarConfigAgenda() {
+  async function guardarConfigAgenda() {
       let curr = new Date();
       curr.setDate(curr.getDate() + (window.editAgendaOffset * 7));
       let mondayStr = getMondayStr(curr.toISOString().split('T')[0]);
@@ -2805,11 +2961,14 @@ body.tema-noche #btnTemaNoche:hover {
           window.configAgendaSemanas[mondayStr] = newConfig;
       }
 
-      // Guardar configuración en localStorage y mostrar notificación
+      // Guardar en localStorage y en el servidor (así impacta en la otra área)
       localStorage.setItem('medi_configAgenda', JSON.stringify(window.configAgenda));
       localStorage.setItem('medi_configAgendaSemanas', JSON.stringify(window.configAgendaSemanas));
-      showToast('Configuración de agenda guardada');
-  } // <-- ESTA LLAVE FALTABA PARA CERRAR LA FUNCIÓN
+      window.formAgendaSucio = false;
+      await guardarDatosServidor();
+      renderMonthlyCalendar();
+      showToast('Configuración de agenda guardada y sincronizada');
+  }
 
   async function agregarMotivoConfig() {
       const input = document.getElementById('nuevoMotivoNombre');
@@ -3791,7 +3950,7 @@ function cambiarPaginaEstudiosHC(dir) {
           <td style="text-align:center;"><span class="badge ${claseBadge}">${t.tipoEvento || 'Consulta'}</span></td>
           <td><strong>${t.paciente || t.motivo}</strong></td>
           <td style="text-align:center;">${t.obra || '-'}</td>
-          <td>${t.motivo}</td>
+          <td>${t.motivo}${t.observaciones ? `<div style="font-size:11px; color:#991b1b; margin-top:4px;">📝 <strong>Obs. del paciente:</strong> ${t.observaciones}</div>` : ''}</td>
           <td style="text-align:center;"><span class="badge ${claseBadge}">${t.estado}</span></td>
           <td style="text-align:center; white-space:nowrap;">${botonesAccion || '-'}</td>
         </tr>`;
@@ -5117,22 +5276,73 @@ function cambiarPaginaEstudiosHC(dir) {
     }
   }
 
+  // Iniciales: primer nombre + último apellido, ignorando títulos (Dr., Dra., Lic.)
+  function obtenerInicialesNombre(nombre) {
+    const texto = String(nombre || '').trim();
+    if (!texto || /^\d+$/.test(texto)) return '👤';
+    const partes = texto.split(/\s+/).filter(p => !/^(dr|dra|lic|sr|sra)\.?$/i.test(p));
+    if (partes.length === 0) return '👤';
+    const ini1 = partes[0].charAt(0);
+    const ini2 = partes.length > 1 ? partes[partes.length - 1].charAt(0) : (partes[0].charAt(1) || '');
+    return (ini1 + ini2).toUpperCase();
+  }
+
   function inicializarPerfil() {
     const usuario = obtenerUsuarioLocal();
+    const nombreMostrar = String(usuario.nombre || usuario.usuario || 'Profesional').trim();
+    const rolMostrar = 'Área Profesional';
+
     const nombreEl = document.getElementById('nombreUsuarioRegistrado');
     const rolEl = document.getElementById('rolUsuarioRegistrado');
     const avatarEl = document.getElementById('avatarUsuarioRegistrado');
-    
-    let nombreMostrar = usuario.nombre || usuario.usuario || 'Profesional';
-    
-    if (nombreEl) nombreEl.innerHTML = nombreMostrar + ' ▾';
-    if (rolEl) rolEl.textContent = 'Área Profesional';
-    
-    if (avatarEl && nombreMostrar) {
-      const partes = nombreMostrar.trim().split(' ');
-      let iniciales = partes[0].charAt(0).toUpperCase();
-      if (partes.length > 1) iniciales += partes[partes.length - 1].charAt(0).toUpperCase();
-      avatarEl.textContent = iniciales;
+    const menuNombre = document.getElementById('menuNombreUsuario');
+    const menuRol = document.getElementById('menuRolUsuario');
+
+    if (nombreEl) nombreEl.textContent = nombreMostrar;
+    if (rolEl) rolEl.textContent = rolMostrar;
+    if (avatarEl) avatarEl.textContent = obtenerInicialesNombre(nombreMostrar);
+    if (menuNombre) menuNombre.textContent = nombreMostrar;
+    if (menuRol) menuRol.textContent = rolMostrar;
+  }
+
+  function abrirCambioPassword() {
+    abrirModalPerfil();
+    const sec = document.getElementById('seccionPassword');
+    if (sec) sec.style.display = 'block';
+    const passActual = document.getElementById('passActual');
+    if (passActual) passActual.focus();
+  }
+
+  // Si se ingresó con documento (o con el usuario), busca el nombre real en el servidor
+  async function asegurarNombreUsuario() {
+    const usuario = obtenerUsuarioLocal();
+    const nombreActual = String(usuario.nombre || '').trim();
+    const docs = [usuario.dni, usuario.documento, usuario.usuario].filter(Boolean).map(v => String(v).trim().toLowerCase());
+    const pareceDocumento = !nombreActual || /^\d{6,}$/.test(nombreActual) || docs.includes(nombreActual.toLowerCase());
+    if (!pareceDocumento) return;
+
+    const claves = [...docs, nombreActual.toLowerCase()].filter(Boolean);
+    try {
+      const res = await fetch('http://localhost:3000/api/usuarios');
+      if (!res.ok) return;
+      const lista = await res.json();
+      const encontrado = lista.find(u =>
+        claves.includes(String(u.dni || '').trim().toLowerCase()) ||
+        claves.includes(String(u.usuario || '').trim().toLowerCase())
+      );
+      if (!encontrado || !encontrado.nombre) return;
+
+      usuario.nombre = encontrado.nombre;
+      if (!usuario.dni && encontrado.dni) usuario.dni = encontrado.dni;
+      if (!usuario.email && encontrado.email) usuario.email = encontrado.email;
+      if (!usuario.telefono && encontrado.telefono) usuario.telefono = encontrado.telefono;
+
+      // Guardamos en la misma clave de sesión que lee obtenerUsuarioLocal()
+      const claveSesion = ['usuarioLogueado', 'usuario_activo', 'usuario'].find(k => localStorage.getItem(k)) || 'usuario_activo';
+      localStorage.setItem(claveSesion, JSON.stringify(usuario));
+      inicializarPerfil();
+    } catch (e) {
+      console.warn('No se pudo obtener el nombre del usuario:', e);
     }
   }
 
@@ -5177,7 +5387,7 @@ function cambiarPaginaEstudiosHC(dir) {
     cerrarModalPerfil();
   }
 
-  function cambiarPassword() {
+  async function cambiarPassword() {
     let usuario = obtenerUsuarioLocal();
     let actual = document.getElementById('passActual').value;
     let nueva = document.getElementById('passNueva').value;
@@ -5188,8 +5398,8 @@ function cambiarPaginaEstudiosHC(dir) {
         return;
     }
 
-    let passGuardada = usuario.password || usuario.clave;
-    if (passGuardada && passGuardada !== actual) {
+    let passGuardada = usuario.password || usuario.pass || usuario.clave || '1234';
+    if (passGuardada && String(passGuardada) !== String(actual)) {
         alert('La contraseña actual ingresada es incorrecta.');
         return;
     }
@@ -5200,36 +5410,118 @@ function cambiarPaginaEstudiosHC(dir) {
     }
 
     if (nueva.length < 4) {
-        alert('La nueva contraseña debe ser más larga.');
+        alert('La nueva contraseña debe tener al menos 4 caracteres.');
         return;
     }
 
+    // Actualizar todas las variantes de contraseña en el objeto de usuario activo
     usuario.password = nueva;
-    usuario.clave = nueva; 
-    
+    usuario.pass = nueva;
+    usuario.clave = nueva;
     guardarEnLocal(usuario);
-    showToast('Contraseña actualizada correctamente');
-    
-    document.getElementById('passActual').value = '';
-    document.getElementById('passNueva').value = '';
-    document.getElementById('passRepetir').value = '';
-  }
 
-  // Cierra el menú si se hace clic afuera
+    // Actualizar también dentro de la lista general de usuarios guardada en localStorage
+    let listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+    let dniActual = String(usuario.dni || usuario.documento || '');
+    let indexUser = listaUsuarios.findIndex(u => String(u.dni) === dniActual || String(u.usuario) === String(usuario.nombre));
+    
+    if (indexUser !== -1) {
+        listaUsuarios[indexUser].password = nueva;
+        listaUsuarios[indexUser].pass = nueva;
+        listaUsuarios[indexUser].clave = nueva;
+        localStorage.setItem('medi_usuarios', JSON.stringify(listaUsuarios));
+    }
+
+    // Enviar los cambios al servidor para que el backend guarde la nueva contraseña en la base o archivo JSON
+    try {
+        await fetch('http://localhost:3000/api/datos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                turnos: window.listaTurnosGeneral,
+                pacientes: window.listaPacientes,
+                obras: window.listaObras,
+                hc: hcSinArchivosBase64(window.listaHC),
+                contactos: window.listaContactos,
+                configMotivos: window.configMotivos || [],
+                usuarios: listaUsuarios // <--- Sincronizamos los usuarios con la nueva clave
+            })
+        });
+        showToast('¡Contraseña actualizada con éxito en el servidor!');
+        document.getElementById('passActual').value = '';
+        document.getElementById('passNueva').value = '';
+        document.getElementById('passRepetir').value = '';
+        document.getElementById('seccionPassword').style.display = 'none';
+        cerrarModalPerfil();
+    } catch (error) {
+        console.error('Error al sincronizar la contraseña:', error);
+        showToast('Contraseña actualizada localmente, pero hubo un error al sincronizar con el servidor.');
+    }
+}
+
+  // Cierra el menú de usuario al hacer clic afuera o con Escape
   document.addEventListener('click', function(event) {
     const menu = document.getElementById('menuPerfil');
-    const btn = document.getElementById('nombreUsuarioRegistrado');
-    if (menu && menu.style.display === 'block' && event.target !== btn && !menu.contains(event.target)) {
+    const trigger = document.getElementById('perfilTrigger');
+    if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !(trigger && trigger.contains(event.target))) {
       menu.style.display = 'none';
     }
   });
+  document.addEventListener('keydown', function(event) {
+    const menu = document.getElementById('menuPerfil');
+    if (event.key === 'Escape' && menu) menu.style.display = 'none';
+  });
 
   inicializarPerfil();
+  asegurarNombreUsuario();
   // -----------------------------------
 
   aplicarTemaGuardado();
   aplicarPermisosMenu();
   cargarDatosServidor();
+
+  // ===== SINCRONIZACIÓN AUTOMÁTICA ENTRE SECRETARÍA Y PROFESIONAL =====
+  // Marca como "en edición" los formularios de Actualizaciones para no pisarlos al sincronizar
+  function marcarConfigEnEdicion(e) {
+    if (seccionActual !== 'actualizaciones' || !e.target.closest) return;
+    if (e.type === 'click' && e.target.tagName !== 'BUTTON') return;
+    if (e.target.closest('#formTurnosConfig')) window.formTiemposSucio = true;
+    if (e.target.closest('#formAgendaConfig')) window.formAgendaSucio = true;
+  }
+  document.addEventListener('input', marcarConfigEnEdicion);
+  document.addEventListener('change', marcarConfigEnEdicion);
+  document.addEventListener('click', marcarConfigEnEdicion);
+
+  let sincronizando = false;
+  async function sincronizarConServidor() {
+    if (sincronizando || window.guardandoDatos) return;
+    sincronizando = true;
+    try {
+      const resV = await fetch('http://localhost:3000/api/version');
+      if (!resV.ok) return;
+      const { version } = await resV.json();
+      if (version === window.versionDatos) return;
+
+      const guardadosAntes = window.contadorGuardados;
+      const resD = await fetch('http://localhost:3000/api/datos');
+      if (!resD.ok) return;
+      const data = await resD.json();
+      // Si guardamos algo mientras se descargaba, descartamos esta lectura (llega en el próximo ciclo)
+      if (window.guardandoDatos || guardadosAntes !== window.contadorGuardados) return;
+
+      aplicarDatosServidor(data);
+      refrescarVistaActual();
+    } catch (e) {
+      // Sin conexión: se reintenta en el próximo ciclo
+    } finally {
+      sincronizando = false;
+    }
+  }
+
+  setInterval(sincronizarConServidor, 3000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) sincronizarConServidor();
+  });
 </script>
 </body>
 </html>

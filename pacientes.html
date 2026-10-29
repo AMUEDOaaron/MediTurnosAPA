@@ -611,6 +611,86 @@
     .main { padding: 16px; }
     .turno-destacado-top { flex-direction: column; align-items: flex-start; gap: 10px; }
   }
+  /* ===== CABECERA: MENÚ DE USUARIO Y MODO OSCURO DISCRETO ===== */
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .btn-icon-header {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.35); background: transparent; color: #fff;
+    font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    opacity: 0.85; transition: background .15s, opacity .15s;
+  }
+  .btn-icon-header:hover { background: rgba(255,255,255,0.15); opacity: 1; }
+
+  .user-menu-wrap { position: relative; }
+  .patient-chip {
+    border: 1px solid rgba(255,255,255,0.25); color: #fff; font-family: inherit;
+    cursor: pointer; transition: background .15s; padding: 5px 12px 5px 6px;
+  }
+  .patient-chip:hover, .patient-chip[aria-expanded="true"] { background: rgba(255,255,255,0.28); }
+  .patient-chip .chip-textos {
+    width: auto; height: auto; background: transparent; color: inherit; border-radius: 0;
+    display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15;
+  }
+  .patient-chip #chipNombre { font-size: 13px; font-weight: 600; display: block; }
+  .patient-chip .chip-textos small { font-size: 11px; font-weight: 400; opacity: 0.8; }
+  .patient-chip .chip-chevron { width: auto; height: auto; background: transparent; color: inherit; border-radius: 0; font-size: 11px; opacity: 0.8; }
+
+  .user-menu {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px); min-width: 230px;
+    background: var(--white); color: var(--text); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.18); overflow: hidden; z-index: 300;
+  }
+  .user-menu.open { display: block; }
+  .user-menu-header { padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--green-soft); }
+  .user-menu-header strong { display: block; font-size: 14px; }
+  .user-menu-header small { font-size: 12px; color: var(--text-soft); }
+  .user-menu-item {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit;
+  }
+  .user-menu-item:hover { background: var(--green-light); color: var(--green); }
+  .user-menu-item.salir { color: var(--danger); border-top: 1px solid var(--border); }
+  .user-menu-item.salir:hover { background: #fef2f2; color: var(--danger); }
+  body.dark-mode .user-menu-item.salir:hover { background: rgba(239,68,68,0.12); }
+
+  /* ===== BOTONES: TOQUE MÁS PROFESIONAL ===== */
+  .btn { border-radius: 8px; letter-spacing: 0.2px; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: none; }
+  .btn-primary { box-shadow: 0 2px 6px rgba(26,122,76,0.25); }
+  .btn-primary:hover { opacity: 1; background: var(--green-dark); box-shadow: 0 4px 12px rgba(26,122,76,0.30); }
+  .btn-outline:hover { background: var(--green-light); }
+  button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+  @media (max-width: 600px) {
+    .patient-chip .chip-textos { display: none; }
+    .header-title small { display: none; }
+  }
+  /* ===== Permisos del portal (permisos.html) ===== */
+  body.sin-solicitar [onclick*="mostrarSeccion('nuevo-turno')"],
+  body.sin-trasladar [onclick*="modificarTurno("],
+  body.sin-ver-turnos [onclick*="mostrarSeccion('mis-turnos')"],
+  body.sin-ver-turnos .card:has(#proximoTurnoAbajo),
+  body.sin-confirmar [onclick*="mostrarSeccion('confirmar-turno')"],
+  body.sin-confirmar [onclick*="confirmarAsistenciaBackend("],
+  body.sin-cancelar [onclick*="cancelarTurno("],
+  body.sin-datos [onclick*="mostrarSeccion('datos')"],
+  body.sin-password [onclick*="abrirModalPassword("],
+  body.solo-lectura-datos #formDatos button {
+    display: none !important;
+  }
+  .aviso-solo-lectura {
+    display: none;
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    background: rgba(26, 122, 76, 0.08);
+    border: 1px solid rgba(26, 122, 76, 0.25);
+    color: inherit;
+  }
+  body.solo-lectura-datos .aviso-solo-lectura { display: block; }
+  body.solo-lectura-datos #formDatos .form-grid { opacity: 0.75; }
 </style>
 </head>
 <body>
@@ -800,20 +880,33 @@
       <small>Turnos Online · Área Paciente</small>
     </div>
   </div>
-  <div style="display: flex; align-items: center; gap: 12px;">
-    <!-- BOTÓN CAMBIAR CONTRASEÑA -->
-    <button class="btn-theme-toggle" onclick="abrirModalPassword()">
-      🔒 Cambiar Contraseña
+  <div class="header-right">
+    <!-- BOTÓN MODO OSCURO (discreto) -->
+    <button type="button" class="btn-icon-header" id="btnThemeToggle" onclick="toggleDarkMode()" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro / oscuro">
+      <span id="themeIcon">🌙</span>
     </button>
 
-    <!-- BOTÓN MODO OSCURO -->
-    <button class="btn-theme-toggle" id="btnThemeToggle" onclick="toggleDarkMode()">
-      <span id="themeIcon">🌙</span> <span id="themeText">Modo Oscuro</span>
-    </button>
+    <!-- MENÚ DE USUARIO -->
+    <div class="user-menu-wrap">
+      <button type="button" class="patient-chip" id="perfilTrigger" onclick="toggleMenuPaciente()" aria-haspopup="true" aria-expanded="false" title="Opciones de usuario">
+        <span id="chipIniciales">--</span>
+        <span class="chip-textos">
+          <span id="chipNombre">Cargando...</span>
+          <small>Paciente</small>
+        </span>
+        <span class="chip-chevron">▾</span>
+      </button>
 
-    <div class="patient-chip">
-      <span id="chipIniciales">--</span>
-      <span id="chipNombre">Cargando...</span>
+      <div class="user-menu" id="menuPaciente">
+        <div class="user-menu-header">
+          <strong id="menuNombrePaciente">—</strong>
+          <small id="menuDniPaciente">—</small>
+        </div>
+        <button type="button" class="user-menu-item" onclick="cerrarMenuPaciente(); mostrarSeccion('datos')">👤 Mis datos personales</button>
+        <button type="button" class="user-menu-item" onclick="cerrarMenuPaciente(); mostrarSeccion('mis-turnos')">📅 Mis turnos</button>
+        <button type="button" class="user-menu-item" onclick="cerrarMenuPaciente(); abrirModalPassword()">🔒 Cambiar contraseña</button>
+        <button type="button" class="user-menu-item salir" onclick="cerrarSesionPaciente()">↪ Cerrar sesión</button>
+      </div>
     </div>
   </div>
 </header>
@@ -831,7 +924,7 @@
     <a class="side-item" href="#" onclick="mostrarSeccion('datos'); return false;">
       <span class="icon">👤</span> Datos personales
     </a>
-    <a class="logout-item" href="pacientes-login.html" onclick="localStorage.removeItem('usuario_activo'); return confirm('¿Querés cerrar la sesión?');">
+    <a class="logout-item" href="pacientes-login.html" onclick="cerrarSesionPaciente(); return false;">
       <span class="icon">↪</span> Cerrar sesión
     </a>
   </aside>
@@ -939,7 +1032,7 @@
       </div>
 
       <div class="info-box" style="margin-top:0; margin-bottom:18px;">
-        Solo se muestran los días en los que la Dra. González tiene turnos libres (martes y jueves).
+        Solo se muestran los días y horarios de atención que el consultorio tiene libres. Elegí primero el tipo de consulta: los horarios dependen de su duración.
       </div>
 
       <form id="formNuevoTurno" onsubmit="enviarSolicitud(event)">
@@ -961,18 +1054,15 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Tipo de consulta <span class="req">*</span></label>
-            <select id="tipoConsulta" required>
-              <option value="">Seleccioná...</option>
-              <option value="Control">Control</option>
-              <option value="Primera consulta">Primera consulta</option>
-              <option value="Seguimiento">Seguimiento</option>
-              <option value="Urgencia / Prioritario">Urgencia / Prioritario</option>
-              <option value="Otro">Otro</option>
+            <select id="tipoConsulta" required onchange="alCambiarTipoConsulta()">
+              <option value="">Cargando...</option>
             </select>
           </div>
           <div class="form-group">
             <label>Motivo de la consulta <span class="req">*</span></label>
-            <input type="text" id="motivo" required placeholder="Ej: control de lunar...">
+            <select id="motivo" required>
+              <option value="">Cargando...</option>
+            </select>
           </div>
         </div>
 
@@ -1002,7 +1092,7 @@
 
         <div class="form-group" style="margin-top:14px;">
           <label>Observaciones (opcional)</label>
-          <textarea id="observaciones" placeholder="Ej: traigo estudios previos, el lunar me duele..."></textarea>
+          <textarea id="observaciones" maxlength="500" placeholder="Ej: traigo estudios previos, el lunar me duele... (máx. 500 caracteres)"></textarea>
         </div>
 
         <div class="form-actions">
@@ -1218,9 +1308,101 @@
   }
 
   // ============================================================
+  // ============================================================
+  // PERMISOS DEL PORTAL (se configuran en permisos.html)
+  // ============================================================
+  let permisosPaciente = {};
+  let firmaPermisos = '';
+
+  // Una función depende de otra: sin "ver mis turnos" no se puede trasladar ni cancelar
+  const DEPENDENCIAS_PAC = {
+    pac_turnos_editar: ['pac_turnos_ver', 'pac_turnos_agregar'],
+    pac_turnos_eliminar: ['pac_turnos_ver'],
+    pac_datos_editar: ['pac_datos_ver']
+  };
+
+  // Secciones del menú lateral y el permiso que necesitan
+  const PERMISO_SECCION = {
+    'nuevo-turno': 'pac_turnos_agregar',
+    'mis-turnos': 'pac_turnos_ver',
+    'confirmar-turno': 'pac_turnos_confirmar',
+    'datos': 'pac_datos_ver'
+  };
+
+  function puede(clave) {
+    const p = permisosPaciente || {};
+    if (clave.startsWith('pac_turnos_') && p.main_pac_turnos === false) return false;
+    if (clave.startsWith('pac_datos_') && p.main_pac_datos === false) return false;
+    if (p[clave] === false) return false;
+    return (DEPENDENCIAS_PAC[clave] || []).every(puede);
+  }
+
+  function seccionPermitida(id) {
+    // El formulario obligatorio de la primera vez se muestra siempre
+    if (id === 'datos' && typeof datosConfirmados !== 'undefined' && !datosConfirmados) return true;
+    const clave = PERMISO_SECCION[id];
+    return !clave || puede(clave);
+  }
+
+  function avisoNoHabilitado() {
+    showToast('Esta función no está habilitada. Consultá con el consultorio.');
+  }
+
+  async function cargarPermisosPaciente() {
+    try {
+      const r = await fetch('/api/permisos');
+      if (!r.ok) throw new Error('sin permisos');
+      permisosPaciente = await r.json() || {};
+      localStorage.setItem('medi_dev_config', JSON.stringify(permisosPaciente));
+    } catch (e) {
+      try { permisosPaciente = JSON.parse(localStorage.getItem('medi_dev_config')) || {}; }
+      catch (_) { permisosPaciente = {}; }
+    }
+    const firma = JSON.stringify(permisosPaciente);
+    if (firma !== firmaPermisos) {
+      firmaPermisos = firma;
+      aplicarPermisosPaciente();
+    }
+  }
+
+  function aplicarPermisosPaciente() {
+    const b = document.body.classList;
+    b.toggle('sin-solicitar', !puede('pac_turnos_agregar'));
+    b.toggle('sin-ver-turnos', !puede('pac_turnos_ver'));
+    b.toggle('sin-trasladar', !puede('pac_turnos_editar'));
+    b.toggle('sin-cancelar', !puede('pac_turnos_eliminar'));
+    b.toggle('sin-confirmar', !puede('pac_turnos_confirmar'));
+    b.toggle('sin-datos', !seccionPermitida('datos'));
+    b.toggle('sin-password', !puede('main_pac_password'));
+
+    // Datos personales en modo "solo lectura"
+    const soloLectura = puede('pac_datos_ver') && !puede('pac_datos_editar')
+      && !(typeof datosConfirmados !== 'undefined' && !datosConfirmados);
+    b.toggle('solo-lectura-datos', soloLectura);
+    const form = document.getElementById('formDatos');
+    if (form) {
+      const grid = form.querySelector('.form-grid');
+      if (grid) grid.inert = soloLectura;
+      if (!form.querySelector('.aviso-solo-lectura')) {
+        const aviso = document.createElement('div');
+        aviso.className = 'aviso-solo-lectura';
+        aviso.textContent = '🔒 Podés ver tus datos, pero para modificarlos comunicate con el consultorio.';
+        form.prepend(aviso);
+      }
+    }
+
+    // Si el paciente está mirando una sección que se acaba de apagar, lo llevamos a otra
+    const visible = [...document.querySelectorAll('.seccion')].find(el => el.offsetParent !== null);
+    if (visible && !seccionPermitida(visible.id)) {
+      const destino = [...document.querySelectorAll('.seccion')].find(el => seccionPermitida(el.id));
+      if (destino) { try { mostrarSeccion(destino.id); } catch (e) {} }
+    }
+  }
+
   // LÓGICA DE CAMBIO DE CONTRASEÑA
   // ============================================================
   function abrirModalPassword() {
+    if (!puede('main_pac_password')) { avisoNoHabilitado(); return; }
     document.getElementById('formCambiarPassword').reset();
     const modal = document.getElementById('modalCambiarPassword');
     if (modal) modal.classList.add('active');
@@ -1518,10 +1700,108 @@
   // ============================================================
   document.addEventListener('DOMContentLoaded', async function() {
     cargarPreferenciaModoOscuro();
+    await resolverNombrePaciente();
+    await cargarPermisosPaciente();
     if (typeof inicializarProvinciasGeoref === 'function') {
       await inicializarProvinciasGeoref();
     }
     cargarUsuarioActivo();
+    // Recién ahora conocemos el nombre del paciente: cargamos sus turnos
+    cargarTurnosDesdeBackend();
+  });
+
+  // ============================================================
+  // CABECERA: NOMBRE, INICIALES Y MENÚ DE USUARIO
+  // ============================================================
+  function actualizarCabeceraPaciente() {
+    const nombre = String(paciente.nombre || 'Paciente').trim();
+    const partes = nombre.split(/\s+/).filter(Boolean);
+    let iniciales = '👤';
+    if (!/^\d+$/.test(nombre) && partes.length) {
+      iniciales = (partes[0].charAt(0) + (partes.length > 1 ? partes[partes.length - 1].charAt(0) : '')).toUpperCase();
+    }
+
+    const chipNombre = document.getElementById('chipNombre');
+    const chipIniciales = document.getElementById('chipIniciales');
+    const menuNombre = document.getElementById('menuNombrePaciente');
+    const menuDni = document.getElementById('menuDniPaciente');
+
+    if (chipNombre) chipNombre.textContent = nombre;
+    if (chipIniciales) chipIniciales.textContent = iniciales;
+    if (menuNombre) menuNombre.textContent = nombre;
+    if (menuDni) menuDni.textContent = paciente.dni ? `DNI ${paciente.dni}` : '';
+  }
+
+  // Si el paciente ingresó con su DNI, busca su nombre real en el servidor
+  async function resolverNombrePaciente() {
+    const raw = localStorage.getItem('usuario_activo');
+    if (!raw) return;
+
+    let u;
+    try { u = JSON.parse(raw); } catch (e) { u = raw; }
+    if (typeof u !== 'object' || u === null) u = { nombre: String(u), dni: String(u) };
+
+    const nombreActual = String(u.nombre || '').trim();
+    const doc = String(u.dni || u.usuario || '').trim();
+    const pareceDocumento = !nombreActual || /^\d{6,}$/.test(nombreActual) || nombreActual === doc;
+
+    if (pareceDocumento) {
+      try {
+        const res = await fetch('/api/usuarios');
+        if (res.ok) {
+          const lista = await res.json();
+          const claves = [u.dni, u.usuario, u.nombre].filter(Boolean).map(v => String(v).trim().toLowerCase());
+          const enc = lista.find(x =>
+            claves.includes(String(x.dni || '').trim().toLowerCase()) ||
+            claves.includes(String(x.usuario || '').trim().toLowerCase())
+          );
+          if (enc) {
+            if (enc.nombre) u.nombre = enc.nombre;
+            if (!u.dni && enc.dni) u.dni = enc.dni;
+            if (!u.telefono && enc.telefono) u.telefono = enc.telefono;
+            if (!u.email && enc.email) u.email = enc.email;
+            if (!u.obra && enc.obra) u.obra = enc.obra;
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo obtener el nombre del paciente:', e);
+      }
+    }
+
+    localStorage.setItem('usuario_activo', JSON.stringify(u));
+    paciente.nombre = String(u.nombre || 'Paciente');
+    paciente.dni = String(u.dni || u.usuario || '');
+    actualizarCabeceraPaciente();
+  }
+
+  function toggleMenuPaciente() {
+    const menu = document.getElementById('menuPaciente');
+    const trigger = document.getElementById('perfilTrigger');
+    if (!menu) return;
+    const abierto = menu.classList.toggle('open');
+    if (trigger) trigger.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  }
+
+  function cerrarMenuPaciente() {
+    const menu = document.getElementById('menuPaciente');
+    const trigger = document.getElementById('perfilTrigger');
+    if (menu) menu.classList.remove('open');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function cerrarSesionPaciente() {
+    cerrarMenuPaciente();
+    if (!confirm('¿Querés cerrar la sesión?')) return;
+    localStorage.removeItem('usuario_activo');
+    window.location.href = 'pacientes-login.html';
+  }
+
+  document.addEventListener('click', function(e) {
+    const wrap = document.querySelector('.user-menu-wrap');
+    if (wrap && !wrap.contains(e.target)) cerrarMenuPaciente();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarMenuPaciente();
   });
 
   function cargarUsuarioActivo() {
@@ -1542,16 +1822,7 @@
     paciente.email = usuarioActivo.email || '';
     paciente.obra = usuarioActivo.obra || 'Particular';
 
-    const chipNombre = document.getElementById('chipNombre');
-    const chipIniciales = document.getElementById('chipIniciales');
-
-    if (chipNombre) chipNombre.textContent = paciente.nombre;
-    if (chipIniciales) {
-      const partes = paciente.nombre.trim().split(/\s+/);
-      const ini1 = partes[0] ? partes[0].charAt(0).toUpperCase() : '';
-      const ini2 = partes.length > 1 ? partes[partes.length - 1].charAt(0).toUpperCase() : '';
-      chipIniciales.textContent = (ini1 + ini2) || '--';
-    }
+    actualizarCabeceraPaciente();
 
     const vistaNombre = document.getElementById('vistaNombre');
     const vistaDni = document.getElementById('vistaDni');
@@ -1663,6 +1934,7 @@
   // ============================================================
   async function guardarModificacionDatos(event) {
     event.preventDefault();
+    if (document.body.classList.contains('solo-lectura-datos')) { avisoNoHabilitado(); return; }
 
     const emailInput = document.getElementById('datoEmail').value.trim();
     const dniInput = document.getElementById('datoNumDoc').value.trim();
@@ -1797,11 +2069,7 @@
     document.getElementById('vistaDni').textContent = paciente.dni;
     document.getElementById('vistaTelefono').textContent = paciente.telefono;
     document.getElementById('vistaObra').textContent = paciente.obra;
-    document.getElementById('chipNombre').textContent = paciente.nombre;
-
-    const iniciales = obtenerIniciales(nombreParaIniciales, apellidoParaIniciales);
-    const chipIniciales = document.getElementById('chipIniciales');
-    if (chipIniciales) chipIniciales.textContent = iniciales;
+    actualizarCabeceraPaciente();
   }
 
   function confirmarDatosOk() {
@@ -1820,6 +2088,7 @@
   // MOSTRAR/OCULTAR SECCIONES
   // ============================================================
   function mostrarSeccion(id) {
+    if (!seccionPermitida(id)) { avisoNoHabilitado(); return; }
     document.querySelectorAll('.seccion').forEach(el => {
       el.classList.remove('activa');
     });
@@ -1864,6 +2133,7 @@
   // CANCELAR TURNO (CON RESTRICCIÓN DE 24 HORAS PREVIAS)
   // ============================================================
   async function cancelarTurno(index) {
+    if (!puede('pac_turnos_eliminar')) { avisoNoHabilitado(); return; }
     const turnoACancelar = turnosFuturos[index];
     if (!turnoACancelar) return;
 
@@ -1905,6 +2175,7 @@
   }
 
   function modificarTurno(index) {
+    if (!puede('pac_turnos_editar')) { avisoNoHabilitado(); return; }
     showToast('Seleccioná un nuevo día y horario para trasladar tu turno');
     mostrarSeccion('nuevo-turno');
   }
@@ -1996,6 +2267,7 @@
   // ============================================================
   async function cargarTurnosDesdeBackend() {
     try {
+      await cargarDisponibilidad();
       const respuesta = await fetch('/api/turnos');
       const data = await respuesta.json();
       todosLosTurnosGlobales = data || [];
@@ -2026,7 +2298,9 @@
         return {
           date: t.fecha,
           time: t.hora,
-          type: 'Control dermatológico (' + t.profesional + ')',
+          id: t.id,
+          observaciones: t.observaciones || '',
+          type: (t.tipoConsulta || 'Consulta') + ' · ' + (t.motivoPaciente || t.motivo || 'Sin motivo') + (t.profesional ? ' (' + t.profesional + ')' : ''),
           status: estado,
           cls: estado === 'Confirmado' ? 'confirmed' : (estado === 'Atendido' ? 'attended' : (estado === 'Cancelado' ? 'cancelled' : 'pending')),
           iso: t.fecha,
@@ -2261,7 +2535,8 @@
   // ============================================================
   // CONFIRMAR ASISTENCIA (LÓGICA CON RESTRICCIÓN DE 48 HORAS)
   // ============================================================
-  function confirmarAsistenciaBackend() {
+  async function confirmarAsistenciaBackend() {
+    if (!puede('pac_turnos_confirmar')) { avisoNoHabilitado(); return; }
     if (turnosFuturos.length === 0) return;
 
     const turno = turnosFuturos[0];
@@ -2286,6 +2561,20 @@
       return;
     }
 
+    // Guardar la confirmación en el servidor (así la ven secretaría y profesional)
+    try {
+      const resp = await fetch(`/api/turnos/${turno.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Confirmado' })
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    } catch (err) {
+      console.error('Error al confirmar asistencia:', err);
+      showToast('No se pudo confirmar la asistencia. Intentá de nuevo.');
+      return;
+    }
+
     turno.status = 'Confirmado';
     turno.cls = 'confirmed';
 
@@ -2305,28 +2594,120 @@
   let calYear = new Date().getFullYear();
   let selectedDate = null;
   let selectedTime = null;
-  const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','16:00','16:30','17:00','17:30'];
+  // ===== CONFIGURACIÓN DEL CONSULTORIO (viene de ACTUALIZACIONES de secretaría/profesional) =====
+  let configTurnosPac = {};
+  let configMotivosPac = [];
+  let configAgendaPac = {};
+  let configAgendaSemanasPac = {};
+  let turnosOcupados = [];
+  let versionDisponibilidad = null;
 
-  function getBusySlots(dateStr) {
-    if (!todosLosTurnosGlobales) return [];
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function fechaLocalPac(d = new Date()) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+  function horaAMinutosPac(h) {
+    if (!h) return 0;
+    const [hh, mm] = String(h).split(':').map(Number);
+    return (hh || 0) * 60 + (mm || 0);
+  }
+  function minutosAHoraPac(m) { return pad2(Math.floor(m / 60)) + ':' + pad2(m % 60); }
 
-    let dateFormatted = dateStr;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      const p = dateStr.split('-');
-      dateFormatted = `${p[2]}/${p[1]}/${p[0]}`;
-    }
-
-    return todosLosTurnosGlobales
-      .filter(t => (t.fecha === dateStr || t.fecha === dateFormatted) && t.estado !== 'Cancelado')
-      .map(t => t.hora);
+  function lunesDeLaSemanaPac(fechaStr) {
+    const [y, m, d] = fechaStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const dia = dt.getDay();
+    dt.setDate(dt.getDate() - dia + (dia === 0 ? -6 : 1));
+    return fechaLocalPac(dt);
   }
 
+  // Igual que en secretaría: primero la semana puntual, si no la agenda estándar
+  function agendaParaFechaPac(fechaStr) {
+    return configAgendaSemanasPac[lunesDeLaSemanaPac(fechaStr)] || configAgendaPac || {};
+  }
+
+  function duracionConsultaElegida() {
+    const tipo = document.getElementById('tipoConsulta').value;
+    return Number(configTurnosPac[tipo]) || 30;
+  }
+
+  function esDiaBloqueado(fechaStr) {
+    return turnosOcupados.some(t => t.fecha === fechaStr && t.motivo === 'Día Bloqueado');
+  }
+
+  // Devuelve todos los horarios del día según la agenda, marcando cuáles están libres
+  function getSlotsDelDia(fechaStr) {
+    if (esDiaBloqueado(fechaStr)) return [];
+    const diaSemana = new Date(fechaStr + 'T00:00:00').getDay();
+    const rangos = agendaParaFechaPac(fechaStr)[diaSemana] || [];
+    const duracion = duracionConsultaElegida();
+    const esHoy = fechaStr === fechaLocalPac();
+    const ahora = new Date();
+    const minsAhora = ahora.getHours() * 60 + ahora.getMinutes();
+    const ocupadosDia = turnosOcupados.filter(t => t.fecha === fechaStr);
+
+    const slots = [];
+    rangos.forEach(r => {
+      const finRango = horaAMinutosPac(r.end);
+      for (let ini = horaAMinutosPac(r.start); ini + duracion <= finRango; ini += duracion) {
+        const finSlot = ini + duracion;
+        const choca = ocupadosDia.some(t => {
+          const s = horaAMinutosPac(t.hora);
+          const e = t.horaHasta ? horaAMinutosPac(t.horaHasta) : s + 30;
+          return ini < e && s < finSlot;
+        });
+        const pasado = esHoy && ini <= minsAhora;
+        slots.push({ hora: minutosAHoraPac(ini), libre: !choca && !pasado });
+      }
+    });
+    return slots;
+  }
+
+  // Un día se puede elegir si es de atención, no está bloqueado y le queda al menos un horario libre
   function isAvailableDay(y, m, d) {
-    const dt = new Date(y, m, d);
-    const wd = dt.getDay();
-    if (wd !== 2 && wd !== 4) return false;
-    const today = new Date(); today.setHours(0,0,0,0);
-    return dt >= today;
+    const fechaStr = `${y}-${pad2(m + 1)}-${pad2(d)}`;
+    if (fechaStr < fechaLocalPac()) return false;
+    return getSlotsDelDia(fechaStr).some(s => s.libre);
+  }
+
+  function llenarSelectsConsulta() {
+    const selTipo = document.getElementById('tipoConsulta');
+    const selMotivo = document.getElementById('motivo');
+    if (!selTipo || !selMotivo) return;
+    const tipoPrevio = selTipo.value;
+    const motivoPrevio = selMotivo.value;
+
+    selTipo.innerHTML = '<option value="">Seleccioná...</option>' +
+      Object.keys(configTurnosPac).map(t => `<option value="${t}">${t} (${configTurnosPac[t]} min)</option>`).join('');
+    selMotivo.innerHTML = '<option value="">Seleccioná...</option>' +
+      configMotivosPac.map(m => `<option value="${m}">${m}</option>`).join('');
+
+    if (tipoPrevio && configTurnosPac[tipoPrevio] !== undefined) selTipo.value = tipoPrevio;
+    if (motivoPrevio && configMotivosPac.includes(motivoPrevio)) selMotivo.value = motivoPrevio;
+  }
+
+  async function cargarDisponibilidad() {
+    try {
+      const res = await fetch('/api/disponibilidad');
+      if (!res.ok) return;
+      const d = await res.json();
+      configTurnosPac = d.configTurnos || {};
+      configMotivosPac = d.configMotivos || [];
+      configAgendaPac = d.configAgenda || {};
+      configAgendaSemanasPac = d.configAgendaSemanas || {};
+      turnosOcupados = d.ocupados || [];
+      versionDisponibilidad = d.version;
+
+      llenarSelectsConsulta();
+      renderCalendar();
+      if (selectedDate) renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
+    } catch (err) {
+      console.error('Error al cargar la disponibilidad:', err);
+    }
+  }
+
+  function alCambiarTipoConsulta() {
+    renderCalendar();
+    if (selectedDate) renderSlots(selectedDate, parseInt(selectedDate.split('-')[2], 10));
+    updateSummary();
   }
 
   function renderCalendar() {
@@ -2367,14 +2748,33 @@
   function renderSlots(dateStr, day) {
     document.getElementById('slotsBox').style.display = 'block';
     const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    document.getElementById('slotsTitle').textContent = `Horarios disponibles · ${day} de ${monthNames[calMonth]}`;
-    
-    const busy = getBusySlots(dateStr);
+    const mesIdx = parseInt(dateStr.split('-')[1], 10) - 1;
+    document.getElementById('slotsTitle').textContent = `Horarios disponibles · ${day} de ${monthNames[mesIdx]}`;
 
-    document.getElementById('slotsGrid').innerHTML = ALL_SLOTS.map(t => {
-      const taken = busy.includes(t);
-      return `<button type="button" class="slot-btn${selectedTime===t?' selected':''}" ${taken?'disabled':''} onclick="selectSlot('${t}')">${t}</button>`;
-    }).join('');
+    const grid = document.getElementById('slotsGrid');
+
+    if (esDiaBloqueado(dateStr)) {
+      grid.innerHTML = '<p class="empty-msg">El consultorio no atiende este día.</p>';
+      return;
+    }
+
+    const slots = getSlotsDelDia(dateStr);
+    if (slots.length === 0) {
+      grid.innerHTML = '<p class="empty-msg">No hay atención programada para este día.</p>';
+      return;
+    }
+
+    // Si el horario elegido dejó de estar libre (lo tomó otra persona o cambió la duración), se deselecciona
+    if (selectedTime && !slots.some(s => s.hora === selectedTime && s.libre)) {
+      selectedTime = null;
+      document.getElementById('horaElegida').value = '';
+      updateSummary();
+      showToast('El horario que habías elegido ya no está disponible. Elegí otro.');
+    }
+
+    grid.innerHTML = slots.map(s =>
+      `<button type="button" class="slot-btn${selectedTime === s.hora ? ' selected' : ''}" ${s.libre ? '' : 'disabled'} onclick="selectSlot('${s.hora}')">${s.hora}</button>`
+    ).join('');
   }
 
   function selectSlot(time) {
@@ -2398,6 +2798,7 @@
   // ============================================================
   async function enviarSolicitud(e) {
     e.preventDefault();
+    if (!puede('pac_turnos_agregar')) { avisoNoHabilitado(); return; }
     if (!datosConfirmados) {
       showToast('Primero confirmá tus datos personales');
       return;
@@ -2408,6 +2809,11 @@
     const tipoConsulta = document.getElementById('tipoConsulta').value;
     const motivo = document.getElementById('motivo').value;
     const observaciones = document.getElementById('observaciones').value.trim();
+
+    if (!tipoConsulta || !motivo) {
+      showToast('Elegí el tipo y el motivo de la consulta');
+      return;
+    }
 
     if (!fecha || !hora) {
       showToast('Seleccioná un día y horario en el calendario');
@@ -2420,18 +2826,19 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paciente: paciente.nombre,
+          dni: paciente.dni,
           email: paciente.email || document.getElementById('datoEmail').value,
           profesional: 'Dra. María González',
           fecha: fecha,
           hora: hora,
-          tipoEvento: tipoConsulta,
+          tipoConsulta: tipoConsulta,
           motivo: motivo,
           observaciones: observaciones,
           obra: paciente.obra
         })
       });
 
-      const resData = await respuesta.json();
+      const resData = await respuesta.json().catch(() => ({}));
 
       if (respuesta.ok && resData.ok !== false) {
         showToast('¡Turno registrado con éxito!');
@@ -2473,6 +2880,26 @@
   // ============================================================
   cargarTurnosDesdeBackend();
   renderCalendar();
+
+  // Sincronización automática: si secretaría/profesional cambian la agenda o reservan un turno,
+  // el calendario del paciente se actualiza solo
+  async function sincronizarDisponibilidad() {
+    try {
+      const r = await fetch('/api/version');
+      if (!r.ok) return;
+      const { version } = await r.json();
+      if (version !== versionDisponibilidad) {
+        await cargarTurnosDesdeBackend();
+        await cargarPermisosPaciente();
+      }
+    } catch (e) {
+      // Sin conexión: se reintenta en el próximo ciclo
+    }
+  }
+  setInterval(sincronizarDisponibilidad, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) sincronizarDisponibilidad();
+  });
 </script>
 
 </body>

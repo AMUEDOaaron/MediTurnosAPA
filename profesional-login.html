@@ -205,7 +205,7 @@
   </div>
 </div>
 <script>
-const formLogin = document.getElementById('formLogin');
+  const formLogin = document.getElementById('formLogin');
   const formRecover = document.getElementById('formRecover');
   const btnForgot = document.getElementById('btnForgot');
   const btnCancelRecover = document.getElementById('btnCancelRecover');
@@ -231,26 +231,54 @@ const formLogin = document.getElementById('formLogin');
   });
 
   // Login
-  formLogin.addEventListener('submit', function(e) {
+  formLogin.addEventListener('submit', async function(e) {
     e.preventDefault();
     ocultarAlerta();
 
     const dniIngresado = document.getElementById('loginDni').value.trim();
     const passwordIngresado = document.getElementById('loginPass').value;
 
-    const listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
+    // Cargamos directamente los usuarios del servidor o del caché prioritario sin mezclar contraseñas viejas
+    let listaUsuarios = JSON.parse(localStorage.getItem('medi_usuarios')) || [];
     const ahora = Date.now();
 
-    // Validar por contraseña normal o por contraseña provisoria válida
-    const idxUsuario = listaUsuarios.findIndex(u => String(u.dni) === dniIngresado);
+    try {
+      const resDatos = await fetch('/api/datos');
+      const dataServidor = await resDatos.json();
+      if (dataServidor && dataServidor.usuarios) {
+        // Revisamos si en el caché local hay una contraseña más actualizada que en el servidor
+        dataServidor.usuarios.forEach(servUser => {
+          const indexLocal = listaUsuarios.findIndex(u => String(u.dni) === String(servUser.dni) || String(u.usuario) === String(servUser.usuario));
+          if (indexLocal !== -1) {
+            const userLocal = listaUsuarios[indexLocal];
+            const passLocal = userLocal.password || userLocal.pass || userLocal.clave;
+            const passServ = servUser.password || servUser.pass || servUser.clave;
+            
+            // Si el usuario cambió su contraseña localmente, priorizamos la local
+            if (passLocal && passLocal !== passServ) {
+              servUser.password = passLocal;
+              servUser.pass = passLocal;
+              servUser.clave = passLocal;
+            }
+          }
+        });
+        listaUsuarios = dataServidor.usuarios;
+        localStorage.setItem('medi_usuarios', JSON.stringify(listaUsuarios));
+      }
+    } catch (err) {
+      console.warn('No se pudo sincronizar con el servidor, usando caché local.');
+    }
+
+    const idxUsuario = listaUsuarios.findIndex(u => String(u.dni) === dniIngresado || String(u.usuario) === dniIngresado);
     let usuarioValido = null;
     let esPasswordProvisorio = false;
 
     if (idxUsuario !== -1) {
       const u = listaUsuarios[idxUsuario];
-      if (u.password === passwordIngresado) {
-        usuarioValido = u;
-      } else if (u.tempPassword && u.tempPassword === passwordIngresado) {
+      const passActualRegistrada = String(u.password || u.pass || u.clave || '');
+
+      // Validar si tiene una contraseña provisoria activa
+      if (u.tempPassword && String(u.tempPassword) === passwordIngresado) {
         if (u.tempPasswordExpires && ahora <= u.tempPasswordExpires) {
           usuarioValido = u;
           esPasswordProvisorio = true;
@@ -259,11 +287,14 @@ const formLogin = document.getElementById('formLogin');
           box.className = 'msg-box error';
           return;
         }
+      } 
+      // Validar estrictamente contra la contraseña actual registrada (y descartar la vieja si cambió)
+      else if (passActualRegistrada === passwordIngresado) {
+        usuarioValido = u;
       }
     }
 
     if (usuarioValido) {
-      // Solo permitimos roles de profesional / admin
       const rol = (usuarioValido.rol || '').toLowerCase();
       if (rol !== 'profesional' && rol !== 'admin') {
         box.textContent = 'Este usuario no tiene permisos de Profesional.';
@@ -271,7 +302,6 @@ const formLogin = document.getElementById('formLogin');
         return;
       }
 
-      // Guardamos el usuario activo
       localStorage.setItem('usuario_activo', JSON.stringify({
         ...usuarioValido,
         rol: 'profesional',
@@ -299,12 +329,42 @@ const formLogin = document.getElementById('formLogin');
       return;
     }
 
-    // Credenciales incorrectas
     box.innerHTML = '❌ DNI o contraseña incorrectos';
     box.className = 'msg-box error';
   });
 
+  // Recuperar contraseña
+  formRecover.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    ocultarAlerta();
 
+    const dni = document.getElementById('recoverDni').value.trim();
+    const email = document.getElementById('recoverEmail').value.trim();
+
+    try {
+      const response = await fetch('/api/recuperar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dni, email })
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        box.innerHTML = `📧 ${data.mensaje} Revisa tu bandeja de entrada.`;
+        box.className = 'msg-box success';
+        document.getElementById('recoverDni').value = '';
+        document.getElementById('recoverEmail').value = '';
+      } else {
+        box.innerHTML = '❌ ' + data.mensaje;
+        box.className = 'msg-box error';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      box.innerHTML = '❌ Error al conectar con el servidor.';
+      box.className = 'msg-box error';
+    }
+  });
 </script>
 </body>
 </html>
